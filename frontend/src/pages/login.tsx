@@ -2,7 +2,12 @@ import backLoginImg from "../assets/BackLogin.png";
 import iconePerfil from "../assets/iconePerfil.jpeg";
 import Google from "../assets/Google.jpg";
 
+
 export function Login() {
+  const handleSubmit = (values: any) => {
+    console.log("valores", values);
+  }
+  
   return (
     <div
       className="w-screen h-screen bg-cover bg-center bg-no-repeat flex items-center justify-end pr-12 md:pr-24"

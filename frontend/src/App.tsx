@@ -1,10 +1,11 @@
 import './App.css'
-import { Login } from './pages/login'
+// import { Login } from './pages/login'
+import { Cadastro } from './pages/cadastro'
 
 function App() {
 
   return (
-    <Login />
+    <Cadastro />
   )
 }
 
