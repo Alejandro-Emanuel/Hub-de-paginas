@@ -1,13 +1,29 @@
 import backLoginImg from "../assets/BackLogin.png";
 import iconePerfil from "../assets/iconePerfil.jpeg";
 import Google from "../assets/Google.jpg";
+import { useState } from "react";
 
+interface LoginProps {
+  IrParaCasdastro: () => void;
+}
 
-export function Login() {
-  const handleSubmit = (values: any) => {
-    console.log("valores", values);
-  }
-  
+export function Login({IrParaCasdastro}: LoginProps) {
+  const [email, setEmail] = useState("");
+  const [senha, setSenha] = useState("");
+  const [erro, setErro] = useState("");
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!email || !senha) {
+      setErro('Preencha o E-mail e a Senha')
+      return;
+    }
+
+    setErro('');
+    console.log('valores', {email, senha});
+  };
+
   return (
     <div
       className="w-screen h-screen bg-cover bg-center bg-no-repeat flex items-center justify-end pr-12 md:pr-24"
@@ -22,21 +38,30 @@ export function Login() {
 
         <h1 className="text-xl font-bold mb-4">Faça seu login</h1>
 
-        <form action="w-full flex flex-col gap-5 text-sm font-semibold">
+        <form 
+        className="w-full flex flex-col gap-5 text-sm font-semibold"
+        onSubmit={handleSubmit}
+        >
           <div>
-            <label className="block mb-1">E-mail</label>
+            <label htmlFor="email" className="block mb-1">E-mail</label>
             <input
               type="email"
+              id="email"
               placeholder="E-mail"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               className="w-full p-3.5 rounded-full bg-[#FAF9EE] outline-none text-base placeholder:text-gray-400"
             />
           </div>
 
-          <div className="">
-            <label className="block mb-1">Senha</label>
+          <div>
+            <label htmlFor="senha" className="block mb-1">Senha</label>
             <input
+              id="senha"
               type="password"
               placeholder="Senha"
+              value={senha}
+              onChange={(e) => setSenha(e.target.value)}
               className="w-full p-2.5 rounded-full bg-[#FAF9EE] outline-none"
             />
             <a
@@ -47,6 +72,10 @@ export function Login() {
             </a>
           </div>
 
+          {erro && (
+            <p className="text-xs text-red-600 text-center -mt-2"> {erro} </p>
+          )}
+
           <div className="w-full flex justify-center mt-2 p-3">
             <button
               type="submit"
@@ -56,18 +85,23 @@ export function Login() {
             </button>
           </div>
         </form>
+
         <div className="">
           <p className="text-xs font-semibold mb-2">Conecte-se também com</p>
 
           <button className="w-8 h-8 rounded-full bg-white flex items-center justify-center border border-[#BFC2AA] mb-4 ">
-            <img src={Google} alt="" />
+            <img src={Google} alt="login com google" />
           </button>
 
           <p className="text-xs text-[#5A6455] font-medium">
             Não tem conta?{" "}
-            <a href="#" className="text-[#E08328] font-bold hover:underline">
+            <button 
+              type="button"
+              onClick={IrParaCasdastro}
+              className="text-[#E08328] font-bold hover:underline"
+            >
               Cadastre-se
-            </a>
+            </button>
           </p>
         </div>
       </div>
