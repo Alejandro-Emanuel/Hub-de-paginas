@@ -62,7 +62,7 @@ export function Login({IrParaCasdastro}: LoginProps) {
               placeholder="Senha"
               value={senha}
               onChange={(e) => setSenha(e.target.value)}
-              className="w-full p-2.5 rounded-full bg-[#FAF9EE] outline-none"
+              className="w-full p-3.5 rounded-full bg-[#FAF9EE] outline-none text-base placeholder:text-grey-400"
             />
             <a
               href="#"
