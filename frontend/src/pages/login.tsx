@@ -5,23 +5,24 @@ import { useState } from "react";
 
 interface LoginProps {
   IrParaCasdastro: () => void;
+  SucessoLogin: () => void;
 }
 
-export function Login({IrParaCasdastro}: LoginProps) {
+export function Login({ IrParaCasdastro, SucessoLogin }: LoginProps) {
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
-  const [erro, setErro] = useState("");
+  // const [erro, setErro] = useState("");  ## Esta desativada para poder entrar sem precisar de login para testar ##
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    SucessoLogin();
+    // if (!email || !senha) {
+    //   setErro('Preencha o E-mail e a Senha')   ## Esta desativada para poder entrar sem precisar de login para testar ##
+    //   return;
+    // }
 
-    if (!email || !senha) {
-      setErro('Preencha o E-mail e a Senha')
-      return;
-    }
-
-    setErro('');
-    console.log('valores', {email, senha});
+    // setErro('');
+    // console.log('valores', {email, senha});
   };
 
   return (
@@ -38,12 +39,14 @@ export function Login({IrParaCasdastro}: LoginProps) {
 
         <h1 className="text-xl font-bold mb-4">Faça seu login</h1>
 
-        <form 
-        className="w-full flex flex-col gap-5 text-sm font-semibold"
-        onSubmit={handleSubmit}
+        <form
+          className="w-full flex flex-col gap-5 text-sm font-semibold"
+          onSubmit={handleSubmit}
         >
           <div>
-            <label htmlFor="email" className="block mb-1">E-mail</label>
+            <label htmlFor="email" className="block mb-1">
+              E-mail
+            </label>
             <input
               type="email"
               id="email"
@@ -55,7 +58,9 @@ export function Login({IrParaCasdastro}: LoginProps) {
           </div>
 
           <div>
-            <label htmlFor="senha" className="block mb-1">Senha</label>
+            <label htmlFor="senha" className="block mb-1">
+              Senha
+            </label>
             <input
               id="senha"
               type="password"
@@ -72,9 +77,9 @@ export function Login({IrParaCasdastro}: LoginProps) {
             </a>
           </div>
 
-          {erro && (
-            <p className="text-xs text-red-600 text-center -mt-2"> {erro} </p>
-          )}
+          {/* {erro && (
+            <p className="text-xs text-red-600 text-center -mt-2"> {erro} </p>  ## Esta desativada para poder entrar sem precisar de login para testar ##
+          )} */}
 
           <div className="w-full flex justify-center mt-2 p-3">
             <button
@@ -95,14 +100,13 @@ export function Login({IrParaCasdastro}: LoginProps) {
 
           <p className="text-xs text-[#5A6455] font-medium">
             Não tem conta?{" "}
-            <button 
+            <button
               type="button"
               onClick={IrParaCasdastro}
               className="text-[#E08328] font-bold hover:underline"
             >
               Cadastre-se
             </button>
-            
           </p>
         </div>
       </div>
