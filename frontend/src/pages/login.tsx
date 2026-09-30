@@ -102,6 +102,7 @@ export function Login({IrParaCasdastro}: LoginProps) {
             >
               Cadastre-se
             </button>
+            
           </p>
         </div>
       </div>

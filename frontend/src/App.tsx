@@ -3,7 +3,7 @@ import { Login } from './pages/login'
 import { Cadastro } from './pages/cadastro'
 import { useState } from 'react';
 
-type Tela = "login" | "cadastro";
+type Tela = "login" | "cadastro" | "DashboardAdm";
 
 function App() {
   const [tela, setTela] = useState<Tela>("login");
