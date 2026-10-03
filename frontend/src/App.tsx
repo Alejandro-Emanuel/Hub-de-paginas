@@ -1,16 +1,21 @@
 import "./App.css";
 import { Login } from "./pages/login";
 import { Cadastro } from "./pages/cadastro";
-import { DasboardAdm } from "./pages/dashboardAdm";
+import { DashboardAdm } from "./pages/dashboardAdm";
+import { CadastrarLivros } from "./pages/CadastrarLivros";
 import { useState } from "react";
 
-type Tela = "login" | "cadastro" | "DashboardAdm";
+export type Tela = "login" | "cadastro" | "DashboardAdm" | "cadastrarLivros";
 
 function App() {
   const [tela, setTela] = useState<Tela>("login");
 
   if (tela === "DashboardAdm") {
-    return <DasboardAdm onLogout={() => setTela("login")} />;
+    return (<DashboardAdm onLogout={() => setTela("login")} IrPara={setTela} />);
+  }
+
+  if (tela === "cadastrarLivros") {
+    return <CadastrarLivros Voltar={() => setTela("DashboardAdm")} />;
   }
 
   if (tela === "cadastro") {

@@ -1,6 +1,7 @@
 import { CardIcone } from "../components/CardsDashboard";
 import { BarraLateral } from "../components/BarraLateral";
 import {Titulo} from "../components/Titulo"
+import type { Tela } from "../App";
 import livro from "../assets/iconeCards/Livro.png";
 import Dollar from "../assets/iconeCards/Dollar sign.png";
 import Marcador from "../assets/iconeCards/Marcador.png";
@@ -13,9 +14,10 @@ import Perfil from "../assets/iconeCards/Perfil.png"
 
 interface DashboardAdmProps {
   onLogout: () => void;
+  IrPara: (tela: Tela) => void;
 }
 
-export function DasboardAdm({ onLogout }: DashboardAdmProps) {
+export function DashboardAdm({ onLogout, IrPara }: DashboardAdmProps) {
   return (
     <div className="min-h-screen bg-[#C5CBB0] flex gap-6 p-6">
       
@@ -50,7 +52,7 @@ export function DasboardAdm({ onLogout }: DashboardAdmProps) {
         <Titulo>Gestão</Titulo>
 
         <div className="flex flex-wrap justify-center gap-12">
-          <CardIcone.Root>
+          <CardIcone.Root onClick={() => IrPara("cadastrarLivros")}>
         <img
           src={livro}
           alt="icone de livro"
