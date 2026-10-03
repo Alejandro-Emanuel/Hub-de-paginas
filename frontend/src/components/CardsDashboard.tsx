@@ -1,16 +1,26 @@
 import type { ReactNode } from "react";
 
-function Root({ children }: { children: ReactNode }) {
+interface RootProps {
+  children: ReactNode;
+  onClick?: () => void;
+}
+
+function Root({ children, onClick }: RootProps) {
   return (
-    <div className="w-40 h-40 bg-[#FFF8E1] text-[#4A5546] rounded-4x1 shadow-lg flex flex-col items-center justify-center gap-2">
+    <button
+      type="button"
+      onClick={onClick}
+      className="w-40 h-40 bg-[#FFF8E1] text-[#4A5546] rounded-[32px] shadow-lg flex flex-col items-center justify-center gap-2 cursor-pointer hover:scale-105 transition-transform"
+    >
       {children}
-    </div>
+    </button>
   );
 }
 
 function Texto({ children }: { children: ReactNode }) {
-  return;
-  <span className="ont-serif italic font-semibold text-sm">{children}</span>;
+  return (
+    <span className="ont-serif italic font-semibold text-sm">{children}</span>
+  );
 }
 
 export const CardIcone = { Root, Texto };
