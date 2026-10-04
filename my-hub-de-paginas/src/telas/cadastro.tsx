@@ -35,7 +35,7 @@ export function Cadastro({IrParaLogin}: CadastroProps) {
     
     
     return(
-        <div className="w-screen h-screen bg-cover bg-center flex items-center justify-end p-8 md:p-16" 
+        <div className="w-screen h-screen bg-cover bg-center bg-no-repeat flex items-center justify-end pr-12 md:pr-24" 
         style={{ backgroundImage: `url(${BackCadastro.src})` }}
         >
             <div className="bg-[#E2E4CF] w-full max-w-md p-8 rounded-[40px] flex flex-col items-center text-[#4A5546] shadow-lg">
