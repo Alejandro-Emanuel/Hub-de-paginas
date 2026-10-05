@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from 'react'
 import Image from 'next/image'
 import BackCadastro from '../assets/BackCadastro.png'
@@ -13,26 +15,48 @@ export function Cadastro({IrParaLogin}: CadastroProps) {
     const [senha, setSenha] = useState("");
     const [confirmSenha, setConfirmSenha] = useState("");
     const [erro, setErro] = useState("");
+    const [carregando, setCarregando] = useState(false);
     
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setErro("");
         
         if (!nome || !email || !senha || !confirmSenha) {
-            setErro("Preencha todos os campos")
-            return
-        }
-
-        if (senha !== confirmSenha) {
-            setErro("As senhas n estão iguais")
+            setErro("Preencha todos os campos");
             return;
         }
 
-        setErro("");
-        console.log("valores", {nome, email, senha});
+        if (senha !== confirmSenha) {
+            setErro("As senhas não estão iguais");
+            return;
+        }
 
+        setCarregando(true);
+
+        try {
+            const response = await fetch('/api/auth/cadastro', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ nome, email, senha }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                setErro(data.mensagem || "Erro ao cadastrar usuário.");
+                return;
+            }
+
+            alert("Conta criada com sucesso! Redirecionando para o login...");
+            IrParaLogin();
+        } catch (err) {
+            setErro("Erro ao se conectar com o servidor.");
+        } finally {
+            setCarregando(false);
+        }
     };
-    
-    
     
     return(
         <div className="w-screen h-screen bg-cover bg-center bg-no-repeat flex items-center justify-end pr-12 md:pr-24" 
@@ -60,11 +84,11 @@ export function Cadastro({IrParaLogin}: CadastroProps) {
                         <label htmlFor='nome' className='block mb-1 pl-1'>Digite seu nome</label>
                         <input 
                             type="text"
-                            id='text'
+                            id='nome'
                             placeholder='Seu nome'
                             value={nome}
                             onChange={(e) => setName(e.target.value)}
-                            className='w-full p-3.5 rounded-full bg-[#FAF9EE] outline-none text-base placeholder:text-grey-400'
+                            className='w-full p-3.5 rounded-full bg-[#FAF9EE] outline-none text-base placeholder:text-gray-400'
                         />
                     </div>
 
@@ -76,7 +100,7 @@ export function Cadastro({IrParaLogin}: CadastroProps) {
                             value={email}
                             placeholder='E-mail'
                             onChange={(e) => setEmail(e.target.value)}
-                            className='w-full p-3.5 rounded-full bg-[#FAF9EE] outline-none text-base placeholder:text-grey-400'
+                            className='w-full p-3.5 rounded-full bg-[#FAF9EE] outline-none text-base placeholder:text-gray-400'
                         />
                     </div>
 
@@ -88,7 +112,7 @@ export function Cadastro({IrParaLogin}: CadastroProps) {
                             value={senha}
                             placeholder='Senha'
                             onChange={(e) => setSenha(e.target.value)}
-                            className='w-full p-3.5 rounded-full bg-[#FAF9EE] outline-none text-base placeholder:text-grey-400'
+                            className='w-full p-3.5 rounded-full bg-[#FAF9EE] outline-none text-base placeholder:text-gray-400'
                         />
                     </div>
                     
@@ -100,21 +124,22 @@ export function Cadastro({IrParaLogin}: CadastroProps) {
                             placeholder='Confirme sua senha'
                             value={confirmSenha}
                             onChange={(e) => setConfirmSenha(e.target.value)}
-                            className='w-full p-3.5 rounded-full bg-[#FAF9EE] outline-none text-base placeholder:text-grey-400'
+                            className='w-full p-3.5 rounded-full bg-[#FAF9EE] outline-none text-base placeholder:text-gray-400'
                         />
                     </div>
 
                     {erro && (
-                        <p className='text-xs text-red-600 text-center -mt-2'> {erro} </p>
+                        <p className='text-xs text-red-600 text-center -mt-2'>{erro}</p>
                     )}
 
                     <div className="w-full border-t border-[#BFC2AA] my-6" />
-                        <button
-                            type="submit"
-                            className="bg-[#4E5C4E] text-white py-2.5 px-10 rounded-2xl text-sm font-semibold shadow-md hover:bg-[#3D493D] transition-colors self-center"
-                        > 
-                        Criar conta
-                        </button>
+                    <button
+                        type="submit"
+                        disabled={carregando}
+                        className="bg-[#4E5C4E] text-white py-2.5 px-10 rounded-2xl text-sm font-semibold shadow-md hover:bg-[#3D493D] transition-colors self-center disabled:opacity-50"
+                    > 
+                        {carregando ? "Criando conta..." : "Criar conta"}
+                    </button>
 
                    
                     <p className="text-xs text-[#5A6455] font-medium text-center">

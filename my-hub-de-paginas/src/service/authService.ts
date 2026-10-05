@@ -35,3 +35,27 @@ export function autenticarUsuario(email: string, senha: string){
     }
   };
 }
+
+// função para cadastrar um novo usuário :)
+export async function cadastrarUsuario(nome: string, email: string, senha: string) {
+  // 1. Criptografa a senha antes de salvar
+  const salt = await bcrypt.genSalt(10);
+  const senhaHash = await bcrypt.hash(senha, salt);
+
+  // Exemplo de objeto pronto para salvar no Banco de Dados
+  const novoUsuario = {
+    id: String(Date.now()),
+    nome,
+    email,
+    senhaHash
+  };
+
+  return {
+    mensagem: 'Usuário cadastrado com sucesso!',
+    usuario: {
+      id: novoUsuario.id,
+      nome: novoUsuario.nome,
+      email: novoUsuario.email
+    }
+  };
+}
