@@ -1,12 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import { Login } from "@/telas/login";
-import { Cadastro } from "@/telas/cadastro";
-import { DashboardAdm } from "@/telas/dashboardAdm";
-import { CadastrarLivros } from "@/telas/CadastrarLivros";
+import { Login } from "@/pages/login";
+import { Cadastro } from "@/pages/cadastro";
+import { DashboardAdm } from "@/pages/dashboardAdm";
+import { CadastrarLivros } from "@/pages/CadastrarLivros";
 
-type Tela = "login" | "cadastro" | "dashboardAdm" | "cadastrarLivros";
+type Tela =
+  | "login"
+  | "cadastro"
+  | "dashboardAdm"
+  | "cadastrarLivros"
+  | "emprestimos"
+  | "reservas"
+  | "multas"
+  | "relatorios"
 
 export default function Home() {
   const [tela, setTela] = useState<Tela>("login");
