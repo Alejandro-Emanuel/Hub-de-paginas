@@ -1,3 +1,5 @@
+'use client';
+
 import backLoginImg from "../assets/BackLogin.png";
 import iconePerfil from "../assets/iconePerfil.jpeg";
 import Google from "../assets/Google.jpg";
@@ -12,18 +14,48 @@ interface LoginProps {
 export function Login({ IrParaCasdastro, SucessoLogin }: LoginProps) {
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
-  // const [erro, setErro] = useState("");  ## Esta desativada para poder entrar sem precisar de login para testar ##
+  const [erro, setErro] = useState("");
+  const [carregando, setCarregando] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    SucessoLogin();
-    // if (!email || !senha) {
-    //   setErro('Preencha o E-mail e a Senha')   ## Esta desativada para poder entrar sem precisar de login para testar ##
-    //   return;
-    // }
+    setErro("");
 
-    // setErro('');
-    // console.log('valores', {email, senha});
+    if (!email || !senha) {
+      setErro("Preencha o E-mail e a Senha!");
+      return;
+    }
+
+    setCarregando(true);
+
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, senha }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setErro(data.mensagem || "E-mail ou senha incorretos.");
+        return;
+      }
+
+      // Salva o token retornado pelo backend
+      if (data.token) {
+        localStorage.setItem("token", data.token);
+      }
+
+      // Executa a função de sucesso para avançar a tela
+      SucessoLogin();
+    } catch (err) {
+      setErro("Erro ao se conectar com o servidor.");
+    } finally {
+      setCarregando(false);
+    }
   };
 
   return (
@@ -68,7 +100,7 @@ export function Login({ IrParaCasdastro, SucessoLogin }: LoginProps) {
               placeholder="Senha"
               value={senha}
               onChange={(e) => setSenha(e.target.value)}
-              className="w-full p-3.5 rounded-full bg-[#FAF9EE] outline-none text-base placeholder:text-grey-400"
+              className="w-full p-3.5 rounded-full bg-[#FAF9EE] outline-none text-base placeholder:text-gray-400"
             />
             <a
               href="#"
@@ -78,24 +110,25 @@ export function Login({ IrParaCasdastro, SucessoLogin }: LoginProps) {
             </a>
           </div>
 
-          {/* {erro && (
-            <p className="text-xs text-red-600 text-center -mt-2"> {erro} </p>  ## Esta desativada para poder entrar sem precisar de login para testar ##
-          )} */}
+          {erro && (
+            <p className="text-xs text-red-600 text-center -mt-2">{erro}</p>
+          )}
 
           <div className="w-full flex justify-center mt-2 p-3">
             <button
               type="submit"
-              className="bg-[#4E5C4E] text-white py-2 px-6 rounded-xl self-center mt-2"
+              disabled={carregando}
+              className="bg-[#4E5C4E] text-white py-2 px-6 rounded-xl self-center mt-2 disabled:opacity-50"
             >
-              Entrar
+              {carregando ? "Entrando..." : "Entrar"}
             </button>
           </div>
         </form>
 
-        <div className="">
+        <div>
           <p className="text-xs font-semibold mb-2">Conecte-se também com</p>
 
-          <button className="w-8 h-8 rounded-full bg-white flex items-center justify-center border border-[#BFC2AA] mb-4 ">
+          <button className="w-8 h-8 rounded-full bg-white flex items-center justify-center border border-[#BFC2AA] mb-4">
             <Image
               src={Google}
               alt="login com google"
