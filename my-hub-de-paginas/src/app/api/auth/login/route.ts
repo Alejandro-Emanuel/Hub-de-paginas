@@ -1,4 +1,3 @@
-//importações necessárias
 import {NextResponse} from "next/server";
 import { autenticarUsuario } from "@/service/authService";
 
