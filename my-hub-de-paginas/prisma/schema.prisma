@@ -1,115 +1,17 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
 datasource db {
   provider = "postgresql"
 }
 
-generator client {
-  provider = "prisma-client-js"
-}
-
-model Perfil {
-  id      Int       @id @default(autoincrement())
-  senha   String
-  nome    String
-  email   String    @unique
-  usuario Usuario[]
-}
-
-model Usuario {
-  id          Int          @id @default(autoincrement())
-  perfilId    Int          @map("perfil_id")
-  perfil      Perfil       @relation(fields: [perfilId], references: [id])
-  emprestimos Emprestimo[]
-  reservas    Reserva[]
-
-  @@map("usuario")
-}
-
-model Gestao {
-  id          Int          @id @default(autoincrement())
-  senha       String
-  nome        String
-  email       String       @unique
-  emprestimos Emprestimo[]
-  devolucoes  Devolucao[]
-
-  @@map("gestao")
-}
-
-model Livro {
-  id          Int          @id @default(autoincrement())
-  nome        String
-  nomeDoAutor String       @map("nome_do_autor")
-  editora     String
-  ano         Int
-  genero      String
-  emprestimos Emprestimo[]
-  reservas    Reserva[]
-
-  @@map("livro")
-}
-
-model Emprestimo {
-  id                   Int         @id @default(autoincrement())
-  usuarioId            Int         @map("usuario_id")
-  gestaoId             Int         @map("gestao_id")
-  livroId              Int         @map("livro_id")
-  dataEmprestimo       DateTime    @default(now()) @map("data_emprestimo") @db.Date
-  dataPrevistaDevolucao DateTime   @map("data_prevista_devolucao") @db.Date
-
-  usuario              Usuario     @relation(fields: [usuarioId], references: [id])
-  gestao               Gestao      @relation(fields: [gestaoId], references: [id])
-  livro                Livro       @relation(fields: [livroId], references: [id])
-  renovacoes           Renovacao[]
-  devolucao            Devolucao?
-
-  @@map("emprestimo")
-}
-
-model Reserva {
-  id          Int      @id @default(autoincrement())
-  usuarioId   Int      @map("usuario_id")
-  livroId     Int      @map("livro_id")
-  disponivel  Boolean  @default(false)
-  dataReserva DateTime @default(now()) @map("data_reserva") @db.Date
-
-  usuario     Usuario  @relation(fields: [usuarioId], references: [id])
-  livro       Livro    @relation(fields: [livroId], references: [id])
-
-  @@map("reserva")
-}
-
-model Renovacao {
-  id                Int        @id @default(autoincrement())
-  emprestimoId      Int        @map("emprestimo_id")
-  dataRenovacao     DateTime   @default(now()) @map("data_renovacao") @db.Date
-  novaDataDevolucao DateTime   @map("nova_data_devolucao") @db.Date
-
-  emprestimo        Emprestimo @relation(fields: [emprestimoId], references: [id])
-
-  @@map("renovacao")
-}
-
-model Devolucao {
-  id            Int        @id @default(autoincrement())
-  emprestimoId  Int        @unique @map("emprestimo_id")
-  gestaoId      Int        @map("gestao_id")
-  dataDevolucao DateTime   @default(now()) @map("data_devolucao") @db.Date
-
-  emprestimo    Emprestimo @relation(fields: [emprestimoId], references: [id])
-  gestao        Gestao     @relation(fields: [gestaoId], references: [id])
-  multa         Multa?
-
-  @@map("devolucao")
-}
-
-model Multa {
-  id          Int       @id @default(autoincrement())
-  devolucaoId Int       @unique @map("devolucao_id")
-  valor       Decimal   @db.Decimal(10, 2)
-  diasAtraso  Int       @map("dias_atraso")
-  status      String
-
-  devolucao   Devolucao @relation(fields: [devolucaoId], references: [id])
-
-  @@map("multa")
+model cadastro_livro {
+  id            Int    @id @default(autoincrement())
+  nome          String @db.VarChar(255)
+  nome_do_autor String @db.VarChar(150)
+  editora       String @db.VarChar(150)
+  ano           Int
+  genero        String @db.VarChar(100)
 }
