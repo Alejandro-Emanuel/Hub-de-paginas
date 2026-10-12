@@ -1,4 +1,4 @@
-import {NextResponse} from "next/server";
+import { NextResponse } from "next/server";
 import { cadastrarUsuario } from "@/service/authService";
 
 export async function POST(request: Request) {
@@ -9,8 +9,8 @@ export async function POST(request: Request) {
     // Validação no servidor
     if (!nome || !email || !senha) {
       return NextResponse.json(
-        { mensagem: 'Preencha todos os campos obrigatórios!' },
-        { status: 400 }
+        { mensagem: "Preencha todos os campos obrigatórios!" },
+        { status: 400 },
       );
     }
 
@@ -20,8 +20,8 @@ export async function POST(request: Request) {
     return NextResponse.json(resultado, { status: 201 });
   } catch (erro: any) {
     return NextResponse.json(
-      { mensagem: erro.message || 'Erro interno ao cadastrar usuário' },
-      { status: 500 }
+      { mensagem: erro.message || "Erro interno ao cadastrar usuário" },
+      { status: 500 },
     );
   }
 }
