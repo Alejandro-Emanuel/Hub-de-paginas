@@ -5,6 +5,9 @@ import { Titulo } from "../components/Titulo";
 import Image from "next/image";
 import perfil from "../assets/iconeCards/Perfil.png";
 import { useState } from "react";
+import tealFundo from "../assets/iconeCards/telaDeFundo.png"
+import ajudaIcon from "../assets/iconeCards/interrogaçãoIcon.png"
+import marcador from "../assets/iconeCards/Marcador.png"
 
 interface CadastrarLivrosProps {
   Voltar: () => void;
@@ -67,26 +70,30 @@ export function CadastrarLivros({ Voltar }: CadastrarLivrosProps) {
   const estiloInput = "w-full p-3 rounded-full bg-[#FFF8E1] outline-none text-[#4A5546]";
 
   return (
-    <div className="min-h-screen bg-[#C5CBB0] flex gap-6 p-6">
+    <div className="min-h-screen bg-[#C5CBB0] flex gap-6 p-6"
+    style={{ backgroundImage: `url(${tealFundo.src})` }}
+    >
       <BarraLateral.Root>
         <Image src={perfil} alt="Perfil" className="w-20 h-20 rounded-full mx-auto" />
         <hr />
 
         <BarraLateral.Item>
           <Image
-            src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'/%3E"
-            alt=""
-            width={24}
-            height={24}
+            src={ajudaIcon}
+            alt="Ajuda"
+            width={40}
+            height={40}
+            className="mx-auto"
           />
         </BarraLateral.Item>
 
         <BarraLateral.Item>
           <Image
-            src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'/%3E"
+            src={marcador}
             alt=""
-            width={24}
-            height={24}
+            width={40}
+            height={40}
+            className="mx-auto"
           />
         </BarraLateral.Item>
 
@@ -99,9 +106,10 @@ export function CadastrarLivros({ Voltar }: CadastrarLivrosProps) {
           />
         </BarraLateral.Item>
         <div className="mt-auto">
-          <button onClick={Voltar} type="button" className="font-semibold text-[#4A5546]">
+          <BarraLateral.Item onClick={Voltar}>
+            <span className="w-6 h-6" aria-hidden="true" />
             Voltar
-          </button>
+          </BarraLateral.Item>
         </div>
       </BarraLateral.Root>
 
@@ -158,6 +166,7 @@ export function CadastrarLivros({ Voltar }: CadastrarLivrosProps) {
             >
               {carregando ? "Cadastrando..." : "Cadastrar"}
             </button>
+            
             <button
               type="button"
               onClick={Voltar}

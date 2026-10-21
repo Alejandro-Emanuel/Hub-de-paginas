@@ -11,6 +11,8 @@ import Marcador from "../assets/iconeCards/Marcador.png";
 import Multa from "../assets/iconeCards/Multa.png";
 import Clip from "../assets/iconeCards/Paperclip.png";
 import Perfil from "../assets/iconeCards/Perfil.png";
+import telaFundo from "../assets/iconeCards/telaDeFundo.png"
+import ajudaIcon from "../assets/iconeCards/interrogaçãoIcon.png"
 
 interface DashboardAdmProps {
   onLogout: () => void;
@@ -46,7 +48,9 @@ export function DashboardAdm({ onLogout, IrPara }: DashboardAdmProps) {
   };
 
   return (
-    <div className="min-h-screen bg-[#C5CBB0] flex gap-6 p-6">
+    <div className="min-h-screen bg-[#C5CBB0] flex gap-6 p-6"
+    style={{ backgroundImage: `url(${telaFundo.src})` }}
+    >
       <BarraLateral.Root>
         <Image
           src={Perfil}
@@ -56,12 +60,7 @@ export function DashboardAdm({ onLogout, IrPara }: DashboardAdmProps) {
         <hr />
 
         <BarraLateral.Item>
-          <span className="w-6 h-6" aria-hidden="true" />
-          Config
-        </BarraLateral.Item>
-
-        <BarraLateral.Item>
-          <span className="w-6 h-6" aria-hidden="true" />
+          <Image src={ajudaIcon} alt="Ajuda" className="w-6 h-6" />
           Ajuda
         </BarraLateral.Item>
 
