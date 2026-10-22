@@ -93,3 +93,15 @@ model usuario {
   reserva    reserva[]
   perfil     perfil       @relation(fields: [perfil_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
+
+
+model relatorio {
+  id              Int      @id @default(autoincrement())
+  titulo          String   @db.VarChar(150)
+  descricao       String?
+  periodo_inicio  DateTime? @db.Date
+  periodo_fim     DateTime? @db.Date
+  observacoes     String?
+  criado_em       DateTime @default(now())
+  atualizado_em   DateTime @updatedAt
+}
