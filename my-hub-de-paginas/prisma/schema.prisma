@@ -67,7 +67,7 @@ model perfil {
   email   String   @unique @db.VarChar(150)
   usuario usuario?
 }
-
+  
 model renovacao {
   id                  Int        @id @default(autoincrement())
   emprestimo_id       Int

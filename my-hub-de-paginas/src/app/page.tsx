@@ -5,6 +5,7 @@ import { Login } from "@/pages/login";
 import { Cadastro } from "@/pages/cadastro";
 import { DashboardAdm } from "@/pages/dashboardAdm";
 import { CadastrarLivros } from "@/pages/CadastrarLivros";
+import { Relatorios } from "@/pages/relatorios";
 
 type Tela =
   | "login"
@@ -18,6 +19,14 @@ type Tela =
 
 export default function Home() {
   const [tela, setTela] = useState<Tela>("login");
+
+  if (tela === "relatorios") {
+  return (
+    <Relatorios
+      Voltar={() => setTela("dashboardAdm")}
+    />
+  );
+}
 
   if (tela === "cadastro") {
     return <Cadastro IrParaLogin={() => setTela("login")} />;
