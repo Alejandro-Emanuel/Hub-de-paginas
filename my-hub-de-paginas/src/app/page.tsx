@@ -5,7 +5,11 @@ import { Login } from "@/pages/login";
 import { Cadastro } from "@/pages/cadastro";
 import { DashboardAdm } from "@/pages/dashboardAdm";
 import { CadastrarLivros } from "@/pages/CadastrarLivros";
+<<<<<<< HEAD
 import { Relatorios } from "@/pages/relatorios";
+=======
+import { Reservas } from "@/pages/reservas";
+>>>>>>> 2b85767 (tela de reservas front)
 
 type Tela =
   | "login"
@@ -15,7 +19,7 @@ type Tela =
   | "emprestimos"
   | "reservas"
   | "multas"
-  | "relatorios"
+  | "relatorios";
 
 export default function Home() {
   const [tela, setTela] = useState<Tela>("login");
@@ -38,6 +42,15 @@ export default function Home() {
 
   if (tela === "cadastrarLivros") {
     return <CadastrarLivros Voltar={() => setTela("dashboardAdm")} />;
+  }
+
+  if (tela === "reservas") {
+    return (
+      <Reservas
+        Voltar={() => setTela("dashboardAdm")}
+        onLogout={() => setTela("login")}
+      />
+    );
   }
 
   return (
