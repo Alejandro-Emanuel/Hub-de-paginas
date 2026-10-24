@@ -1,7 +1,6 @@
-
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import Image from 'next/image';
 import { BarraLateral } from '../components/BarraLateral';
 import { Titulo } from '../components/Titulo';
@@ -22,16 +21,6 @@ interface Registro {
   status: string;
 }
 
-// Dados demonstrativos. Substitua pela resposta da API quando
-// os endpoints de empréstimos, reservas e multas estiverem prontos.
-const dadosIniciais: Registro[] = [
-  { id: 1, tipo: 'emprestimos', descricao: 'Dom Casmurro', responsavel: 'Aluno 01', data: '2026-10-20', status: 'Ativo' },
-  { id: 2, tipo: 'reservas', descricao: 'O Pequeno Príncipe', responsavel: 'Aluno 02', data: '2026-10-19', status: 'Pendente' },
-  { id: 3, tipo: 'multas', descricao: 'A Revolução dos Bichos', responsavel: 'Aluno 03', data: '2026-10-18', status: 'Pendente' },
-  { id: 4, tipo: 'emprestimos', descricao: 'Harry Potter', responsavel: 'Aluno 04', data: '2026-10-15', status: 'Devolvido' },
-  { id: 5, tipo: 'reservas', descricao: 'O Hobbit', responsavel: 'Aluno 05', data: '2026-10-12', status: 'Confirmada' },
-];
-
 const nomesTipo: Record<TipoRelatorio, string> = {
   todos: 'Todos os registros',
   emprestimos: 'Empréstimos',
@@ -47,8 +36,32 @@ export function Relatorios({ Voltar }: RelatoriosProps) {
   const [inicio, setInicio] = useState('');
   const [fim, setFim] = useState('');
   const [busca, setBusca] = useState('');
-  const [registros, setRegistros] = useState(dadosIniciais);
+  const [registros, setRegistros] = useState<Registro[]>([]);
   const [mensagem, setMensagem] = useState('');
+  const [carregando, setCarregando] = useState(true);
+
+  // Buscar os dados reais da API ao carregar a página
+  useEffect(() => {
+    async function carregarRelatorios() {
+      try {
+        const resposta = await fetch('/api/relatorios');
+        if (!resposta.ok) {
+          throw new Error('Erro ao buscar relatórios');
+        }
+        const dados = await resposta.json();
+        if (Array.isArray(dados)) {
+          setRegistros(dados);
+        }
+      } catch (erro) {
+        console.error('Erro ao carregar dados da API:', erro);
+        setMensagem('Erro ao carregar os dados do servidor.');
+      } finally {
+        setCarregando(false);
+      }
+    }
+
+    carregarRelatorios();
+  }, []);
 
   const filtrados = useMemo(() => {
     return registros.filter((registro) => {
@@ -126,7 +139,7 @@ export function Relatorios({ Voltar }: RelatoriosProps) {
       atuais.map((r) => (r.id === id ? { ...r, status } : r)),
     );
     setMensagem(
-      'Status alterado apenas nesta demonstração. Conecte à API para salvar no banco.',
+      'Status alterado localmente. (Implemente a rota PATCH se desejar persistir no banco).',
     );
   }
 
@@ -186,19 +199,19 @@ export function Relatorios({ Voltar }: RelatoriosProps) {
             <article className="rounded-3xl bg-[#E2E4CF] p-5 text-[#4A5546] shadow-md">
               <p className="text-sm">Empréstimos</p>
               <p className="mt-2 text-3xl font-bold">{totalEmprestimos}</p>
-              <p className="mt-1 text-xs opacity-70">Registros demonstrativos</p>
+              <p className="mt-1 text-xs opacity-70">Registros no banco</p>
             </article>
 
             <article className="rounded-3xl bg-[#E2E4CF] p-5 text-[#4A5546] shadow-md">
               <p className="text-sm">Reservas</p>
               <p className="mt-2 text-3xl font-bold">{totalReservas}</p>
-              <p className="mt-1 text-xs opacity-70">Registros demonstrativos</p>
+              <p className="mt-1 text-xs opacity-70">Registros no banco</p>
             </article>
 
             <article className="rounded-3xl bg-[#FFF8E1] p-5 text-[#4A5546] shadow-md">
               <p className="text-sm">Multas</p>
               <p className="mt-2 text-3xl font-bold">{totalMultas}</p>
-              <p className="mt-1 text-xs opacity-70">Registros demonstrativos</p>
+              <p className="mt-1 text-xs opacity-70">Registros no banco</p>
             </article>
           </section>
 
@@ -309,7 +322,7 @@ export function Relatorios({ Voltar }: RelatoriosProps) {
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[700px] border-collapse text-left text-sm">
+              <table className="w-full min-w-175 border-collapse text-left text-sm">
                 <thead>
                   <tr className="border-b-2 border-[#D5D8C4]">
                     <th className="px-3 py-4">Livro / registro</th>
@@ -321,49 +334,55 @@ export function Relatorios({ Voltar }: RelatoriosProps) {
                 </thead>
 
                 <tbody>
-                  {filtrados.map((registro) => (
-                    <tr
-                      key={registro.id}
-                      className="border-b border-[#E2E4CF] transition hover:bg-[#F5F0DA]"
-                    >
-                      <td className="px-3 py-4 font-semibold">
-                        {registro.descricao}
-                      </td>
-                      <td className="px-3 py-4">{registro.responsavel}</td>
-                      <td className="px-3 py-4">
-                        {new Date(
-                          `${registro.data}T12:00:00`,
-                        ).toLocaleDateString('pt-BR')}
-                      </td>
-                      <td className="px-3 py-4">
-                        {nomesTipo[registro.tipo]}
-                      </td>
-                      <td className="px-3 py-4">
-                        <select
-                          aria-label={`Alterar status de ${registro.descricao}`}
-                          className="max-w-36 rounded-lg border border-[#C5CBB0] bg-white px-2 py-2"
-                          value={registro.status}
-                          onChange={(e) =>
-                            atualizarStatus(registro.id, e.target.value)
-                          }
-                        >
-                          {(
-                            registro.tipo === 'emprestimos'
-                              ? ['Ativo', 'Devolvido', 'Atrasado']
-                              : registro.tipo === 'reservas'
-                                ? ['Pendente', 'Confirmada', 'Cancelada']
-                                : ['Pendente', 'Paga', 'Cancelada']
-                          ).map((status) => (
-                            <option key={status} value={status}>
-                              {status}
-                            </option>
-                          ))}
-                        </select>
+                  {carregando ? (
+                    <tr>
+                      <td colSpan={5} className="px-3 py-10 text-center opacity-70">
+                        Carregando relatórios do banco de dados...
                       </td>
                     </tr>
-                  ))}
-
-                  {filtrados.length === 0 && (
+                  ) : filtrados.length > 0 ? (
+                    filtrados.map((registro) => (
+                      <tr
+                        key={`${registro.tipo}-${registro.id}`}
+                        className="border-b border-[#E2E4CF] transition hover:bg-[#F5F0DA]"
+                      >
+                        <td className="px-3 py-4 font-semibold">
+                          {registro.descricao}
+                        </td>
+                        <td className="px-3 py-4">{registro.responsavel}</td>
+                        <td className="px-3 py-4">
+                          {registro.data
+                            ? new Date(`${registro.data}T12:00:00`).toLocaleDateString('pt-BR')
+                            : '-'}
+                        </td>
+                        <td className="px-3 py-4">
+                          {nomesTipo[registro.tipo]}
+                        </td>
+                        <td className="px-3 py-4">
+                          <select
+                            aria-label={`Alterar status de ${registro.descricao}`}
+                            className="max-w-36 rounded-lg border border-[#C5CBB0] bg-white px-2 py-2"
+                            value={registro.status}
+                            onChange={(e) =>
+                              atualizarStatus(registro.id, e.target.value)
+                            }
+                          >
+                            {(
+                              registro.tipo === 'emprestimos'
+                                ? ['Ativo', 'Devolvido', 'Atrasado']
+                                : registro.tipo === 'reservas'
+                                  ? ['Pendente', 'Confirmada', 'Cancelada']
+                                  : ['Pendente', 'Paga', 'Cancelada']
+                            ).map((status) => (
+                              <option key={status} value={status}>
+                                {status}
+                              </option>
+                            ))}
+                          </select>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
                     <tr>
                       <td
                         colSpan={5}
@@ -378,8 +397,7 @@ export function Relatorios({ Voltar }: RelatoriosProps) {
             </div>
 
             <p className="mt-5 text-xs opacity-65">
-              Os registros e alterações desta versão são demonstrativos.
-              Conecte a API para consultar e persistir dados reais.
+              Dados integrados diretamente com o banco de dados PostgreSQL.
             </p>
           </section>
 

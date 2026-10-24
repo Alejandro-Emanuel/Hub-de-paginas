@@ -5,11 +5,8 @@ import { Login } from "@/pages/login";
 import { Cadastro } from "@/pages/cadastro";
 import { DashboardAdm } from "@/pages/dashboardAdm";
 import { CadastrarLivros } from "@/pages/CadastrarLivros";
-<<<<<<< HEAD
 import { Relatorios } from "@/pages/relatorios";
-=======
 import { Reservas } from "@/pages/reservas";
->>>>>>> 2b85767 (tela de reservas front)
 
 type Tela =
   | "login"
