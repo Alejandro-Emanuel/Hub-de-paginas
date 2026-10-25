@@ -22,6 +22,13 @@ interface Livro {
   genero: string;
 }
 
+interface Emprestimo {
+  id: number;
+  usuario_id: number;
+  livro_id: number;
+  data_prevista_devolucao: string;
+}
+
 interface ReservasProps {
   Voltar: () => void;
   onLogout: () => void;
@@ -35,6 +42,10 @@ export function Reservas({ Voltar, onLogout }: ReservasProps) {
   const [livros, setLivros] = useState<Livro[]>([]);
   const [carregado, setCarregado] = useState(false);
   const [erro, setErro] = useState("");
+
+  // Estados para gerenciar os empréstimos e a renovação
+  const [emprestimos, setEmprestimos] = useState<Emprestimo[]>([]);
+  const [erroRenovacao, setErroRenovacao] = useState("");
 
   useEffect(() => {
     if (painel !== "buscar") return;
@@ -64,6 +75,52 @@ export function Reservas({ Voltar, onLogout }: ReservasProps) {
       clearTimeout(timer);
     };
   }, [painel, busca]);
+
+  // Effect para buscar empréstimos ativos quando o painel for "renovacao"
+  useEffect(() => {
+    if (painel !== "renovacao") return;
+
+    const usuarioIdLogado = 1; // Ajuste conforme o ID do usuário logado no seu sistema
+
+    async function carregarEmprestimos() {
+      try {
+        const resposta = await fetch(`/api/emprestimos?usuarioId=${usuarioIdLogado}`);
+        if (!resposta.ok) throw new Error("Erro ao carregar");
+        const dados = await resposta.json();
+        setEmprestimos(dados);
+        setErroRenovacao("");
+      } catch {
+        setErroRenovacao("Não foi possível carregar seus empréstimos.");
+      }
+    }
+
+    carregarEmprestimos();
+  }, [painel]);
+
+  // Função para chamar a API de renovação de empréstimo
+  const handleRenovar = async (emprestimoId: number) => {
+    try {
+      const resposta = await fetch("/api/emprestimos", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ emprestimoId }),
+      });
+
+      if (!resposta.ok) throw new Error("Falha ao renovar");
+
+      const resultado = await resposta.json();
+      alert(resultado.mensagem || "Empréstimo renovado com sucesso!");
+
+      // Atualiza a data na lista localmente para refletir na tela na mesma hora
+      setEmprestimos(emprestimos.map(e => 
+        e.id === emprestimoId 
+          ? { ...e, data_prevista_devolucao: resultado.emprestimo.data_prevista_devolucao } 
+          : e
+      ));
+    } catch {
+      alert("Erro ao tentar renovar o empréstimo.");
+    }
+  };
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -170,9 +227,39 @@ export function Reservas({ Voltar, onLogout }: ReservasProps) {
             )}
 
             {painel === "renovacao" && (
-              <p className="m-auto text-center font-serif italic">
-                Em breve: aqui aparecerão os seus empréstimos para renovar.
-              </p>
+              <div className="flex flex-col gap-4">
+                <h3 className="font-serif italic font-bold text-lg">Meus Empréstimos Ativos</h3>
+
+                {erroRenovacao && <p className="text-sm text-red-600">{erroRenovacao}</p>}
+
+                {emprestimos.length === 0 && !erroRenovacao && (
+                  <p className="text-center font-serif italic">
+                    Você não possui empréstimos ativos no momento.
+                  </p>
+                )}
+
+                <ul className="flex flex-col gap-3">
+                  {emprestimos.map((emp) => (
+                    <li
+                      key={emp.id}
+                      className="rounded-2xl bg-white/60 px-5 py-3 flex justify-between items-center"
+                    >
+                      <div>
+                        <p className="font-serif italic font-bold">Empréstimo #{emp.id}</p>
+                        <p className="text-sm">
+                          Devolução prevista para: {new Date(emp.data_prevista_devolucao).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => handleRenovar(emp.id)}
+                        className="bg-[#4A5546] text-[#FFF8E1] px-4 py-2 rounded-full text-sm font-bold hover:opacity-90 transition cursor-pointer"
+                      >
+                        Renovar (+7 dias)
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             )}
           </section>
         </div>
