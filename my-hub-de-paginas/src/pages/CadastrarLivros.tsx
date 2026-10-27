@@ -29,7 +29,7 @@ export function CadastrarLivros({ Voltar }: CadastrarLivrosProps) {
     setErro("");
     setSucesso("");
 
-    // Alinhado com a validação da API (título, editora, ano e gênero obrigatórios)
+    // Validação alinhada com a API (título, editora, ano e gênero obrigatórios)
     if (!titulo || !editora || !ano || !genero) {
       setErro("Preencha todos os campos obrigatórios.");
       return;
@@ -55,7 +55,7 @@ export function CadastrarLivros({ Voltar }: CadastrarLivrosProps) {
 
       setSucesso("Livro cadastrado com sucesso!");
       
-      // Limpa os campos do formulário
+      // Limpa os campos do formulário após o sucesso
       setTitulo("");
       setAutor("");
       setEditora("");
