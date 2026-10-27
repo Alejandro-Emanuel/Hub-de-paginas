@@ -7,6 +7,7 @@ import { DashboardAdm } from "@/pages/dashboardAdm";
 import { CadastrarLivros } from "@/pages/CadastrarLivros";
 import { Relatorios } from "@/pages/relatorios";
 import { Reservas } from "@/pages/reservas";
+import { Help } from "@/pages/help";
 
 type Tela =
   | "login"
@@ -16,18 +17,15 @@ type Tela =
   | "emprestimos"
   | "reservas"
   | "multas"
+  | "help"
   | "relatorios";
 
 export default function Home() {
   const [tela, setTela] = useState<Tela>("login");
 
   if (tela === "relatorios") {
-  return (
-    <Relatorios
-      Voltar={() => setTela("dashboardAdm")}
-    />
-  );
-}
+    return <Relatorios Voltar={() => setTela("dashboardAdm")} />;
+  }
 
   if (tela === "cadastro") {
     return <Cadastro IrParaLogin={() => setTela("login")} />;
@@ -46,8 +44,13 @@ export default function Home() {
       <Reservas
         Voltar={() => setTela("dashboardAdm")}
         onLogout={() => setTela("login")}
+        IrParaAjuda={() => setTela("help")}
       />
     );
+  }
+
+  if (tela === "help") {
+    return <Help Voltar={() => setTela("dashboardAdm")} />;
   }
 
   return (

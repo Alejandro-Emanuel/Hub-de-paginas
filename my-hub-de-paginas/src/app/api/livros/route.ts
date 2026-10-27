@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { cadastrarLivro } from "@/service/Livros_Service";
 
-// Método GET: busca que já estava pronto
+// Método GET: Utilizado pela página de Reservas para buscar/filtrar os livros
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -33,37 +33,39 @@ export async function GET(request: Request) {
   }
 }
 
-// Método POST: cadastro que já estava pronto
+// Método POST: Utilizado para cadastrar um novo livro
 export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { titulo, autor, editora, ano, genero } = body;
 
-    if (!titulo || !editora || !ano || !genero) {
+    // Validação dos campos obrigatórios
+    if (!titulo || !autor || !editora || !ano || !genero) {
       return NextResponse.json(
         { mensagem: "Preencha todos os campos" },
         { status: 400 }
       );
     }
     
+    // Validação se o ano é numérico
     if (!Number.isInteger(Number(ano))) {
       return NextResponse.json(
-        { mensagem: "O ano precisa ser um número" },
+        { mensagem: "O ano obrigatoriamente precisa ser um número!" },
         { status: 400 }
       );
     }
 
-    const livro = await cadastrarLivro({ titulo, autor, editora, ano, genero });
+    const resultado = await cadastrarLivro({ titulo, autor, editora, ano, genero });
 
     return NextResponse.json(
-      { mensagem: "Livro cadastrado com sucesso", livro },
+      { mensagem: "Livro cadastrado com sucesso", livro: resultado.livro },
       { status: 201 }
     );
 
   } catch (error) {
-    console.error(error);
+    console.error("Erro ao cadastrar livro:", error);
     return NextResponse.json(
-      { mensagem: "Erro ao cadastrar" },
+      { mensagem: "Erro ao cadastrar livro." },
       { status: 500 }
     );
   }

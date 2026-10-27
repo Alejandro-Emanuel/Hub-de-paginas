@@ -51,7 +51,7 @@ export function Cadastro({IrParaLogin}: CadastroProps) {
 
             alert("Conta criada com sucesso! Redirecionando para o login...");
             IrParaLogin();
-        } catch (err) {
+        } catch {
             setErro("Erro ao se conectar com o servidor.");
         } finally {
             setCarregando(false);

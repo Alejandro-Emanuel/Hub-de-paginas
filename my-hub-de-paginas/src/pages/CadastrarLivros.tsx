@@ -5,9 +5,9 @@ import { Titulo } from "../components/Titulo";
 import Image from "next/image";
 import perfil from "../assets/iconeCards/Perfil.png";
 import { useState } from "react";
-import tealFundo from "../assets/iconeCards/telaDeFundo.png"
-import ajudaIcon from "../assets/iconeCards/interrogaçãoIcon.png"
-import marcador from "../assets/iconeCards/Marcador.png"
+import tealFundo from "../assets/iconeCards/telaDeFundo.png";
+import ajudaIcon from "../assets/iconeCards/interrogaçãoIcon.png";
+import marcador from "../assets/iconeCards/Marcador.png";
 
 interface CadastrarLivrosProps {
   Voltar: () => void;
@@ -29,8 +29,9 @@ export function CadastrarLivros({ Voltar }: CadastrarLivrosProps) {
     setErro("");
     setSucesso("");
 
-    if (!titulo || !autor) {
-      setErro("Preencha pelo menos o título e o autor.");
+    // Alinhado com a validação da API (título, editora, ano e gênero obrigatórios)
+    if (!titulo || !editora || !ano || !genero) {
+      setErro("Preencha todos os campos obrigatórios.");
       return;
     }
 
@@ -60,7 +61,7 @@ export function CadastrarLivros({ Voltar }: CadastrarLivrosProps) {
       setEditora("");
       setAno("");
       setGenero("");
-    } catch (err) {
+    } catch {
       setErro("Erro ao se conectar com o servidor.");
     } finally {
       setCarregando(false);
@@ -70,8 +71,9 @@ export function CadastrarLivros({ Voltar }: CadastrarLivrosProps) {
   const estiloInput = "w-full p-3 rounded-full bg-[#FFF8E1] outline-none text-[#4A5546]";
 
   return (
-    <div className="min-h-screen bg-[#C5CBB0] flex gap-6 p-6"
-    style={{ backgroundImage: `url(${tealFundo.src})` }}
+    <div 
+      className="min-h-screen bg-[#C5CBB0] flex gap-6 p-6"
+      style={{ backgroundImage: `url(${tealFundo.src})` }}
     >
       <BarraLateral.Root>
         <Image src={perfil} alt="Perfil" className="w-20 h-20 rounded-full mx-auto" />
@@ -90,7 +92,7 @@ export function CadastrarLivros({ Voltar }: CadastrarLivrosProps) {
         <BarraLateral.Item>
           <Image
             src={marcador}
-            alt=""
+            alt="Marcador"
             width={40}
             height={40}
             className="mx-auto"

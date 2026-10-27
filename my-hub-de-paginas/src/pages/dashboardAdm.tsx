@@ -16,7 +16,7 @@ import ajudaIcon from "../assets/iconeCards/interrogaçãoIcon.png"
 
 interface DashboardAdmProps {
   onLogout: () => void;
-  IrPara: (tela: "cadastrarLivros" | "emprestimos" | "reservas" | "multas" | "relatorios") => void;
+  IrPara: (tela: "cadastrarLivros" | "emprestimos" | "reservas" | "multas" | "relatorios" | "help") => void;
 }
 
 export function DashboardAdm({ onLogout, IrPara }: DashboardAdmProps) {
@@ -59,7 +59,7 @@ export function DashboardAdm({ onLogout, IrPara }: DashboardAdmProps) {
         />
         <hr />
 
-        <BarraLateral.Item>
+        <BarraLateral.Item onClick={() => IrPara("help")}>
           <Image src={ajudaIcon} alt="Ajuda" className="w-6 h-6" />
           Ajuda
         </BarraLateral.Item>
