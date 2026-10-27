@@ -5,6 +5,7 @@ import iconePerfil from "../assets/iconePerfil.jpeg";
 import Google from "../assets/Google.jpg";
 import Image from "next/image";
 import { useState } from "react";
+import telaFundo from "../assets/BackLogin.png"
 
 interface LoginProps {
   IrParaCasdastro: () => void;
@@ -61,7 +62,7 @@ export function Login({ IrParaCasdastro, SucessoLogin }: LoginProps) {
   return (
     <div
       className="w-screen h-screen bg-cover bg-center bg-no-repeat flex items-center justify-end pr-12 md:pr-24"
-      style={{ backgroundImage: `url(${backLoginImg.src})` }}
+      style={{ backgroundImage: `url(${telaFundo.src})` }}
     >
       <div className="bg-[#E2E4CF] w-full max-w-md p-8 rounded-[40px] flex flex-col items-center text-[#4A5546] shadow-lg">
         <Image

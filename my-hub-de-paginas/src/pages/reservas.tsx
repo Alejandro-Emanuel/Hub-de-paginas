@@ -25,11 +25,12 @@ interface Livro {
 interface ReservasProps {
   Voltar: () => void;
   onLogout: () => void;
+  IrParaAjuda: () => void;
 }
 
 type Painel = "buscar" | "renovacao" | null;
 
-export function Reservas({ Voltar, onLogout }: ReservasProps) {
+export function Reservas({ Voltar, onLogout, IrParaAjuda}: ReservasProps) {
   const [painel, setPainel] = useState<Painel>(null);
   const [busca, setBusca] = useState("");
   const [livros, setLivros] = useState<Livro[]>([]);
@@ -83,7 +84,7 @@ export function Reservas({ Voltar, onLogout }: ReservasProps) {
         />
         <hr />
 
-        <BarraLateral.Item>
+        <BarraLateral.Item onClick={IrParaAjuda}>
           <Image src={interrogacao} alt="Ajuda" className="w-6 h-6" />
           Ajuda
         </BarraLateral.Item>
