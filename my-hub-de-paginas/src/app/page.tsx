@@ -8,6 +8,7 @@ import { CadastrarLivros } from "@/pages/CadastrarLivros";
 import { Relatorios } from "@/pages/relatorios";
 import { Reservas } from "@/pages/reservas";
 import { Help } from "@/pages/help";
+import { Multas } from "@/pages/Multas";
 
 type Tela =
   | "login"
@@ -51,6 +52,10 @@ export default function Home() {
 
   if (tela === "help") {
     return <Help Voltar={() => setTela("dashboardAdm")} />;
+  }
+
+  if (tela === "multas") {
+    return <Multas Voltar={() => setTela("dashboardAdm")} />;
   }
 
   return (
