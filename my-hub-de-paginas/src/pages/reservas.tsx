@@ -152,7 +152,7 @@ export function Reservas({ Voltar, onLogout, IrParaAjuda}: ReservasProps) {
         </BarraLateral.Item>
 
         <div className="mt-auto">
-          <BarraLateral.Item onClick={Voltar}>
+          <BarraLateral.Item onClick={() => { handleLogout(); Voltar(); }}>
             <Image src={sair} alt="Ajuda" className="w-6 h-6" />
             Voltar
           </BarraLateral.Item>
