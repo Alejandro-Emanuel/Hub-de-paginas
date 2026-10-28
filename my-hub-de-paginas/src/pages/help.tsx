@@ -6,16 +6,38 @@ import telaFundo from "../assets/iconeCards/telaDeFundo.png";
 import perfil from "../assets/iconeCards/Perfil.png";
 import interrogacao from "../assets/iconeCards/interrogaçãoIcon.png";
 import marcador from "../assets/iconeCards/Marcador.png";
-import retornar from "../assets/iconeCards/Log out.png"
+import retornar from "../assets/iconeCards/Log out.png";
+import { useEffect, useState } from "react";
 
-const telefone = "(84) 9833-8627";
-const email = "teste@gmail.com.br";
-
-interface ajudaProps {
+interface AjudaProps {
   Voltar: () => void;
 }
 
-export function Help({ Voltar }: ajudaProps) {
+export function Help({ Voltar }: AjudaProps) {
+  const [telefone, setTelefone] = useState("Carregando...");
+  const [email, setEmail] = useState("Carregando...");
+
+  useEffect(() => {
+    async function carregarAjuda() {
+      try {
+        const resposta = await fetch("/api/ajuda");
+        if (resposta.ok) {
+          const dados = await resposta.json();
+          setTelefone(dados.telefone);
+          setEmail(dados.email);
+        } else {
+          setTelefone("(84) 9833-8627");
+          setEmail("teste@gmail.com.br");
+        }
+      } catch (erro) {
+        console.error("Erro ao carregar contato:", erro);
+        setTelefone("(84) 9833-8627");
+        setEmail("teste@gmail.com.br");
+      }
+    }
+    carregarAjuda();
+  }, []);
+
   return (
     <div
       className="min-h-screen bg-[#C5CBB0] flex gap-6 p-6"
@@ -130,3 +152,5 @@ export function Help({ Voltar }: ajudaProps) {
     </div>
   );
 }
+
+export default Help;

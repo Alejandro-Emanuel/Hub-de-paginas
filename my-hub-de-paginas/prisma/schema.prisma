@@ -105,3 +105,12 @@ model relatorio {
   criado_em       DateTime @default(now())
   atualizado_em   DateTime @updatedAt
 }
+
+model ConfiguracaoAjuda {
+  id        Int      @id @default(autoincrement())
+  telefone  String
+  email     String
+  atualizado_em DateTime @updatedAt
+
+  @@map("configuracao_ajuda")
+}

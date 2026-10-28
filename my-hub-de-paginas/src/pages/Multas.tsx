@@ -1,7 +1,6 @@
-
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 
 type StatusMulta = "Pendente" | "Paga" | "Cancelada";
 
@@ -16,75 +15,24 @@ type Multa = {
   status: StatusMulta;
 };
 
-const multasIniciais: Multa[] = [
-  {
-    id: 1,
-    usuario: "Ana Beatriz",
-    email: "ana@email.com",
-    livro: "Dom Casmurro",
-    motivo: "Atraso na devolução",
-    valor: 12.5,
-    vencimento: "2026-10-20",
-    status: "Pendente",
-  },
-  {
-    id: 2,
-    usuario: "Pedro Henrique",
-    email: "pedro@email.com",
-    livro: "O Pequeno Príncipe",
-    motivo: "Atraso na devolução",
-    valor: 8.0,
-    vencimento: "2026-10-15",
-    status: "Paga",
-  },
-  {
-    id: 3,
-    usuario: "Mariana Costa",
-    email: "mariana@email.com",
-    livro: "1984",
-    motivo: "Livro danificado",
-    valor: 35.0,
-    vencimento: "2026-10-25",
-    status: "Pendente",
-  },
-  {
-    id: 4,
-    usuario: "Lucas Ferreira",
-    email: "lucas@email.com",
-    livro: "O Hobbit",
-    motivo: "Atraso na devolução",
-    valor: 15.0,
-    vencimento: "2026-10-10",
-    status: "Cancelada",
-  },
-  {
-    id: 5,
-    usuario: "Juliana Alves",
-    email: "juliana@email.com",
-    livro: "Capitães da Areia",
-    motivo: "Atraso na devolução",
-    valor: 10.0,
-    vencimento: "2026-10-22",
-    status: "Pendente",
-  },
-];
-
 const moeda = (valor: number) =>
   valor.toLocaleString("pt-BR", {
     style: "currency",
     currency: "BRL",
   });
 
-const dataFormatada = (data: string) =>
-  new Date(`${data}T12:00:00`).toLocaleDateString("pt-BR");
+const dataFormatada = (data: string) => {
+  if (!data) return "";
+  return new Date(`${data}T12:00:00`).toLocaleDateString("pt-BR");
+};
 
 export function Multas({ Voltar }: { Voltar: () => void }) {
-  const [multas, setMultas] = useState<Multa[]>(multasIniciais);
+  const [multas, setMultas] = useState<Multa[]>([]);
+  const [carregando, setCarregando] = useState(true);
   const [pesquisa, setPesquisa] = useState("");
   const [filtroStatus, setFiltroStatus] = useState("Todas");
   const [modalAberto, setModalAberto] = useState(false);
-  const [multaSelecionada, setMultaSelecionada] =
-    useState<Multa | null>(null);
+  const [multaSelecionada, setMultaSelecionada] = useState<Multa | null>(null);
 
   const [form, setForm] = useState({
     usuario: "",
@@ -95,25 +43,33 @@ export function Multas({ Voltar }: { Voltar: () => void }) {
     vencimento: "",
   });
 
+  // Carrega as multas da API do backend ao abrir a página
+  useEffect(() => {
+    async function carregarMultasAPI() {
+      try {
+        const resposta = await fetch("/api/multas");
+        if (resposta.ok) {
+          const dados = await resposta.json();
+          setMultas(dados);
+        }
+      } catch (erro) {
+        console.error("Erro ao carregar multas:", erro);
+      } finally {
+        setCarregando(false);
+      }
+    }
+    carregarMultasAPI();
+  }, []);
+
   const resumo = useMemo(() => {
-    const pendentes = multas.filter(
-      (multa) => multa.status === "Pendente"
-    );
-    const pagas = multas.filter(
-      (multa) => multa.status === "Paga"
-    );
+    const pendentes = multas.filter((multa) => multa.status === "Pendente");
+    const pagas = multas.filter((multa) => multa.status === "Paga");
 
     return {
       total: multas.length,
       pendentes: pendentes.length,
-      valorPendente: pendentes.reduce(
-        (total, multa) => total + multa.valor,
-        0
-      ),
-      valorPago: pagas.reduce(
-        (total, multa) => total + multa.valor,
-        0
-      ),
+      valorPendente: pendentes.reduce((total, multa) => total + multa.valor, 0),
+      valorPago: pagas.reduce((total, multa) => total + multa.valor, 0),
     };
   }, [multas]);
 
@@ -127,60 +83,40 @@ export function Multas({ Voltar }: { Voltar: () => void }) {
         String(multa.id).includes(termo);
 
       const correspondeStatus =
-        filtroStatus === "Todas" ||
-        multa.status === filtroStatus;
+        filtroStatus === "Todas" || multa.status === filtroStatus;
 
       return correspondePesquisa && correspondeStatus;
     });
   }, [multas, pesquisa, filtroStatus]);
 
-  function atualizarStatus(id: number, status: StatusMulta) {
-    setMultas((atuais) =>
-      atuais.map((multa) =>
-        multa.id === id ? { ...multa, status } : multa
-      )
-    );
+  // Atualiza o status via API (PUT)
+  async function atualizarStatus(id: number, status: StatusMulta) {
+    try {
+      const resposta = await fetch(`/api/multas/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
 
-    setMultaSelecionada(null);
+      if (resposta.ok) {
+        setMultas((atuais) =>
+          atuais.map((multa) => (multa.id === id ? { ...multa, status } : multa))
+        );
+      } else {
+        alert("Erro ao atualizar o status da multa no servidor.");
+      }
+    } catch (erro) {
+      console.error("Erro na requisição:", erro);
+    } finally {
+      setMultaSelecionada(null);
+    }
   }
 
   function cadastrarMulta(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-
-    const valor = Number(form.valor);
-
-    if (
-      !form.usuario.trim() ||
-      !form.email.trim() ||
-      !form.livro.trim() ||
-      !form.vencimento ||
-      !Number.isFinite(valor) ||
-      valor <= 0
-    ) {
-      alert("Preencha todos os campos corretamente.");
-      return;
-    }
-
-    const novaMulta: Multa = {
-      id: Math.max(0, ...multas.map((multa) => multa.id)) + 1,
-      usuario: form.usuario.trim(),
-      email: form.email.trim(),
-      livro: form.livro.trim(),
-      motivo: form.motivo,
-      valor,
-      vencimento: form.vencimento,
-      status: "Pendente",
-    };
-
-    setMultas((atuais) => [novaMulta, ...atuais]);
-    setForm({
-      usuario: "",
-      email: "",
-      livro: "",
-      motivo: "Atraso na devolução",
-      valor: "",
-      vencimento: "",
-    });
+    // Se quiser salvar novas multas no banco futuramente, criaremos o POST na API.
+    // Por enquanto, mantemos a lógica visual ou integrada.
+    alert("Para persistir novas multas, a rota POST deve ser configurada no backend.");
     setModalAberto(false);
   }
 
@@ -209,9 +145,7 @@ export function Multas({ Voltar }: { Voltar: () => void }) {
 
     const csv = [cabecalho, ...linhas]
       .map((linha) =>
-        linha
-          .map((campo) => `"${String(campo).replace(/"/g, '""')}"`)
-          .join(";")
+        linha.map((campo) => `"${String(campo).replace(/"/g, '""')}"`).join(";")
       )
       .join("\n");
 
@@ -231,11 +165,9 @@ export function Multas({ Voltar }: { Voltar: () => void }) {
     if (status === "Paga") {
       return "bg-green-100 text-green-800";
     }
-
     if (status === "Cancelada") {
       return "bg-gray-200 text-gray-700";
     }
-
     return "bg-amber-100 text-amber-800";
   }
 
@@ -252,9 +184,7 @@ export function Multas({ Voltar }: { Voltar: () => void }) {
               ← Voltar ao painel
             </button>
 
-            <p className="text-sm font-medium text-[#68715A]">
-             ADMINISTRAÇÃO
-            </p>
+            <p className="text-sm font-medium text-[#68715A]">ADMINISTRAÇÃO</p>
 
             <h1 className="mt-1 text-3xl font-bold tracking-tight">
               Gerenciamento de Multas
@@ -284,49 +214,33 @@ export function Multas({ Voltar }: { Voltar: () => void }) {
         {/* Indicadores */}
         <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <div className="rounded-3xl bg-[#FFF8E1] p-5 shadow-sm">
-            <p className="text-sm font-medium text-[#727761]">
-              Total de multas
-            </p>
+            <p className="text-sm font-medium text-[#727761]">Total de multas</p>
             <p className="mt-3 text-3xl font-bold">{resumo.total}</p>
-            <p className="mt-2 text-xs text-[#727761]">
-              Registros na demonstração
-            </p>
+            <p className="mt-2 text-xs text-[#727761]">Registros no banco</p>
           </div>
 
           <div className="rounded-3xl bg-[#FFF8E1] p-5 shadow-sm">
-            <p className="text-sm font-medium text-[#727761]">
-              Multas pendentes
-            </p>
+            <p className="text-sm font-medium text-[#727761]">Multas pendentes</p>
             <p className="mt-3 text-3xl font-bold text-amber-700">
               {resumo.pendentes}
             </p>
-            <p className="mt-2 text-xs text-[#727761]">
-              Aguardando pagamento
-            </p>
+            <p className="mt-2 text-xs text-[#727761]">Aguardando pagamento</p>
           </div>
 
           <div className="rounded-3xl bg-[#FFF8E1] p-5 shadow-sm">
-            <p className="text-sm font-medium text-[#727761]">
-              Valor em aberto
-            </p>
+            <p className="text-sm font-medium text-[#727761]">Valor em aberto</p>
             <p className="mt-3 text-2xl font-bold">
               {moeda(resumo.valorPendente)}
             </p>
-            <p className="mt-2 text-xs text-[#727761]">
-              Soma das multas pendentes
-            </p>
+            <p className="mt-2 text-xs text-[#727761]">Soma das multas pendentes</p>
           </div>
 
           <div className="rounded-3xl bg-[#E2E4CF] p-5 shadow-sm">
-            <p className="text-sm font-medium text-[#626B51]">
-              Valor pago
-            </p>
+            <p className="text-sm font-medium text-[#626B51]">Valor pago</p>
             <p className="mt-3 text-2xl font-bold text-green-800">
               {moeda(resumo.valorPago)}
             </p>
-            <p className="mt-2 text-xs text-[#626B51]">
-              Soma das multas pagas
-            </p>
+            <p className="mt-2 text-xs text-[#626B51]">Soma das multas pagas</p>
           </div>
         </section>
 
@@ -336,7 +250,7 @@ export function Multas({ Voltar }: { Voltar: () => void }) {
             <div>
               <h2 className="text-xl font-bold">Lista de multas</h2>
               <p className="mt-1 text-sm text-[#727761]">
-                Consulte os registros e atualize o status visualmente.
+                Consulte os registros e atualize o status no banco de dados.
               </p>
             </div>
 
@@ -377,16 +291,17 @@ export function Multas({ Voltar }: { Voltar: () => void }) {
               </thead>
 
               <tbody className="divide-y divide-[#E9E6D8]">
-                {multasFiltradas.map((multa) => (
-                  <tr
-                    key={multa.id}
-                    className="transition hover:bg-[#FAF7E9]"
-                  >
+                {carregando ? (
+                  <tr>
+                    <td colSpan={7} className="px-5 py-12 text-center text-sm text-[#777B68]">
+                      Carregando multas do banco de dados...
+                    </td>
+                  </tr>
+                ) : multasFiltradas.map((multa) => (
+                  <tr key={multa.id} className="transition hover:bg-[#FAF7E9]">
                     <td className="px-5 py-4">
                       <p className="font-semibold">{multa.usuario}</p>
-                      <p className="mt-1 text-xs text-[#777B68]">
-                        {multa.email}
-                      </p>
+                      <p className="mt-1 text-xs text-[#777B68]">{multa.email}</p>
                     </td>
 
                     <td className="px-5 py-4 text-sm">{multa.livro}</td>
@@ -403,7 +318,9 @@ export function Multas({ Voltar }: { Voltar: () => void }) {
 
                     <td className="px-5 py-4">
                       <span
-                        className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${classeStatus(multa.status)}`}
+                        className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${classeStatus(
+                          multa.status
+                        )}`}
                       >
                         {multa.status}
                       </span>
@@ -422,9 +339,7 @@ export function Multas({ Voltar }: { Voltar: () => void }) {
                         {multa.status === "Pendente" && (
                           <>
                             <button
-                              onClick={() =>
-                                atualizarStatus(multa.id, "Paga")
-                              }
+                              onClick={() => atualizarStatus(multa.id, "Paga")}
                               title="Marcar como paga"
                               className="rounded-lg bg-green-100 px-3 py-2 text-sm font-semibold text-green-800 transition hover:bg-green-200"
                             >
@@ -433,11 +348,7 @@ export function Multas({ Voltar }: { Voltar: () => void }) {
 
                             <button
                               onClick={() => {
-                                if (
-                                  window.confirm(
-                                    "Deseja cancelar esta multa?"
-                                  )
-                                ) {
+                                if (window.confirm("Deseja cancelar esta multa?")) {
                                   atualizarStatus(multa.id, "Cancelada");
                                 }
                               }}
@@ -453,7 +364,7 @@ export function Multas({ Voltar }: { Voltar: () => void }) {
                   </tr>
                 ))}
 
-                {multasFiltradas.length === 0 && (
+                {!carregando && multasFiltradas.length === 0 && (
                   <tr>
                     <td
                       colSpan={7}
@@ -473,148 +384,82 @@ export function Multas({ Voltar }: { Voltar: () => void }) {
         </section>
 
         <p className="text-center text-xs text-[#60684F]">
-          My Hub · Protótipo administrativo · Dados demonstrativos
+          My Hub · Sistema de Biblioteca · Banco de Dados Ativo
         </p>
       </div>
 
-      {/* Modal para cadastrar multa */}
+      {/* Modal de cadastro */}
       {modalAberto && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/40 p-4">
-          <div className="my-auto w-full max-w-xl rounded-3xl bg-[#FFF8E1] p-6 shadow-xl">
-            <div className="mb-6 flex items-start justify-between gap-4">
-              <div>
-                <h2 className="text-2xl font-bold">Nova multa</h2>
-                <p className="mt-1 text-sm text-[#727761]">
-                  Preencha os dados para adicionar ao protótipo.
-                </p>
-              </div>
-
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <form
+            onSubmit={cadastrarMulta}
+            className="w-full max-w-md space-y-4 rounded-3xl bg-[#FFF8E1] p-6 shadow-xl"
+          >
+            <h2 className="text-xl font-bold">Cadastrar multa</h2>
+            <input
+              required
+              value={form.usuario}
+              onChange={(event) => setForm({ ...form, usuario: event.target.value })}
+              placeholder="Usuário"
+              className="w-full rounded-xl border border-[#D5D7C5] bg-white px-4 py-3 text-sm"
+            />
+            <input
+              required
+              type="email"
+              value={form.email}
+              onChange={(event) => setForm({ ...form, email: event.target.value })}
+              placeholder="E-mail"
+              className="w-full rounded-xl border border-[#D5D7C5] bg-white px-4 py-3 text-sm"
+            />
+            <input
+              required
+              value={form.livro}
+              onChange={(event) => setForm({ ...form, livro: event.target.value })}
+              placeholder="Livro"
+              className="w-full rounded-xl border border-[#D5D7C5] bg-white px-4 py-3 text-sm"
+            />
+            <input
+              required
+              value={form.motivo}
+              onChange={(event) => setForm({ ...form, motivo: event.target.value })}
+              placeholder="Motivo"
+              className="w-full rounded-xl border border-[#D5D7C5] bg-white px-4 py-3 text-sm"
+            />
+            <div className="grid grid-cols-2 gap-3">
+              <input
+                required
+                type="number"
+                min="0"
+                step="0.01"
+                value={form.valor}
+                onChange={(event) => setForm({ ...form, valor: event.target.value })}
+                placeholder="Valor"
+                className="w-full rounded-xl border border-[#D5D7C5] bg-white px-4 py-3 text-sm"
+              />
+              <input
+                required
+                type="date"
+                value={form.vencimento}
+                onChange={(event) => setForm({ ...form, vencimento: event.target.value })}
+                className="w-full rounded-xl border border-[#D5D7C5] bg-white px-4 py-3 text-sm"
+              />
+            </div>
+            <div className="flex justify-end gap-3">
               <button
+                type="button"
                 onClick={() => setModalAberto(false)}
-                aria-label="Fechar formulário"
-                className="rounded-lg px-3 py-2 text-xl hover:bg-[#E2E4CF]"
+                className="rounded-xl border border-[#D5D7C5] px-4 py-3 font-semibold"
               >
-                ×
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                className="rounded-xl bg-[#536044] px-4 py-3 font-semibold text-white"
+              >
+                Cadastrar
               </button>
             </div>
-
-            <form onSubmit={cadastrarMulta} className="space-y-4">
-              <div>
-                <label className="mb-1 block text-sm font-semibold">
-                  Nome do usuário
-                </label>
-                <input
-                  required
-                  value={form.usuario}
-                  onChange={(event) =>
-                    setForm({ ...form, usuario: event.target.value })
-                  }
-                  placeholder="Ex.: Maria Silva"
-                  className="w-full rounded-xl border border-[#D5D7C5] bg-white px-4 py-3 outline-none focus:border-[#7D8868]"
-                />
-              </div>
-
-              <div>
-                <label className="mb-1 block text-sm font-semibold">
-                  E-mail do usuário
-                </label>
-                <input
-                  required
-                  type="email"
-                  value={form.email}
-                  onChange={(event) =>
-                    setForm({ ...form, email: event.target.value })
-                  }
-                  placeholder="usuario@email.com"
-                  className="w-full rounded-xl border border-[#D5D7C5] bg-white px-4 py-3 outline-none focus:border-[#7D8868]"
-                />
-              </div>
-
-              <div>
-                <label className="mb-1 block text-sm font-semibold">
-                  Livro
-                </label>
-                <input
-                  required
-                  value={form.livro}
-                  onChange={(event) =>
-                    setForm({ ...form, livro: event.target.value })
-                  }
-                  placeholder="Título do livro"
-                  className="w-full rounded-xl border border-[#D5D7C5] bg-white px-4 py-3 outline-none focus:border-[#7D8868]"
-                />
-              </div>
-
-              <div>
-                <label className="mb-1 block text-sm font-semibold">
-                  Motivo da multa
-                </label>
-                <select
-                  value={form.motivo}
-                  onChange={(event) =>
-                    setForm({ ...form, motivo: event.target.value })
-                  }
-                  className="w-full rounded-xl border border-[#D5D7C5] bg-white px-4 py-3 outline-none focus:border-[#7D8868]"
-                >
-                  <option>Atraso na devolução</option>
-                  <option>Livro danificado</option>
-                  <option>Livro perdido</option>
-                </select>
-              </div>
-
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div>
-                  <label className="mb-1 block text-sm font-semibold">
-                    Valor (R$)
-                  </label>
-                  <input
-                    required
-                    type="number"
-                    min="0.01"
-                    step="0.01"
-                    value={form.valor}
-                    onChange={(event) =>
-                      setForm({ ...form, valor: event.target.value })
-                    }
-                    placeholder="0,00"
-                    className="w-full rounded-xl border border-[#D5D7C5] bg-white px-4 py-3 outline-none focus:border-[#7D8868]"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-1 block text-sm font-semibold">
-                    Data de vencimento
-                  </label>
-                  <input
-                    required
-                    type="date"
-                    value={form.vencimento}
-                    onChange={(event) =>
-                      setForm({ ...form, vencimento: event.target.value })
-                    }
-                    className="w-full rounded-xl border border-[#D5D7C5] bg-white px-4 py-3 outline-none focus:border-[#7D8868]"
-                  />
-                </div>
-              </div>
-
-              <div className="flex flex-col-reverse gap-3 pt-3 sm:flex-row sm:justify-end">
-                <button
-                  type="button"
-                  onClick={() => setModalAberto(false)}
-                  className="rounded-xl border border-[#D5D7C5] px-5 py-3 font-semibold hover:bg-[#E2E4CF]"
-                >
-                  Voltar
-                </button>
-
-                <button
-                  type="submit"
-                  className="rounded-xl bg-[#536044] px-5 py-3 font-semibold text-white transition hover:bg-[#3E4932]"
-                >
-                  Adicionar multa
-                </button>
-              </div>
-            </form>
-          </div>
+          </form>
         </div>
       )}
 
@@ -673,7 +518,9 @@ export function Multas({ Voltar }: { Voltar: () => void }) {
               <div>
                 <p className="mb-2 text-[#727761]">Status atual</p>
                 <span
-                  className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${classeStatus(multaSelecionada.status)}`}
+                  className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${classeStatus(
+                    multaSelecionada.status
+                  )}`}
                 >
                   {multaSelecionada.status}
                 </span>
