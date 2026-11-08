@@ -9,6 +9,7 @@ import telaFundo from "../assets/iconeCards/telaDeFundo.png";
 import perfil from "../assets/iconeCards/Perfil.png";
 import livroIcone from "../assets/iconeCards/Livro.png";
 import renovacaoIcone from "../assets/iconeCards/casinhaIcon.png";
+import ajudaIcon from "@/assets/iconeCards/interrogaçãoIcon.png"
 
 interface Livro {
   id: number;
@@ -30,9 +31,10 @@ interface LivroExterno {
 interface ReservasProps {
   Voltar: () => void;
   onLogout: () => void;
+  IrParaAjuda: () => void;
 }
 
-export function Reservas({ Voltar, onLogout }: ReservasProps) {
+export function Reservas({ Voltar, onLogout, IrParaAjuda }: ReservasProps) {
   const [painel, setPainel] = useState<"buscar" | "renovacao" | null>(null);
   const [busca, setBusca] = useState("");
   const [livros, setLivros] = useState<Livro[]>([]);
@@ -96,6 +98,10 @@ export function Reservas({ Voltar, onLogout }: ReservasProps) {
           className="w-20 h-20 rounded-full mx-auto"
         />
         <hr />
+        <BarraLateral.Item onClick={IrParaAjuda}>
+          <Image src={ajudaIcon} alt="Ajuda" className="w-6 h-6" />
+          Ajuda
+        </BarraLateral.Item>
 
         <BarraLateral.Item onClick={Voltar}>← Voltar</BarraLateral.Item>
 

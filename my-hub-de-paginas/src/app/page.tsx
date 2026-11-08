@@ -37,7 +37,12 @@ export default function Home() {
   }
 
   if (tela === "cadastrarLivros") {
-    return <CadastrarLivros Voltar={() => setTela("dashboardAdm")} />;
+    return (<CadastrarLivros 
+    Voltar={() => setTela("dashboardAdm")} 
+    Reservas={() => setTela("reservas")}
+    Ajuda={() => setTela("help")}
+    />
+    );
   }
 
   if (tela === "reservas") {
