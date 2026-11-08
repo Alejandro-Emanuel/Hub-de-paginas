@@ -49,7 +49,7 @@ export function Reservas({ Voltar, onLogout }: ReservasProps) {
       // 1) Livros da sua biblioteca (banco)
       try {
         const res = await fetch(
-          `/api/livros?busca=${encodeURIComponent(busca)}`
+          `/api/livros?busca=${encodeURIComponent(busca)}`,
         );
         if (!res.ok) throw new Error("Falha");
         const dados: Livro[] = await res.json();
@@ -64,7 +64,7 @@ export function Reservas({ Voltar, onLogout }: ReservasProps) {
       // 2) Livros externos (Open Library). Se falhar, a lista fica vazia.
       try {
         const resExt = await fetch(
-          `/api/livros/externo?busca=${encodeURIComponent(busca)}`
+          `/api/livros/externo?busca=${encodeURIComponent(busca)}`,
         );
         if (resExt.ok && !cancelado) setExternos(await resExt.json());
         else if (!cancelado) setExternos([]);
