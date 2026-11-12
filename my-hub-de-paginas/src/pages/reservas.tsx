@@ -107,8 +107,7 @@ export function Reservas({ Voltar, onLogout, IrParaAjuda }: ReservasProps) {
 
         <div className="mt-auto">
           <BarraLateral.Item onClick={() => { handleLogout(); Voltar(); }}>
-            <Image src={sair} alt="Ajuda" className="w-6 h-6" />
-            Voltar
+            Sair
           </BarraLateral.Item>
         </div>
       </BarraLateral.Root>
@@ -187,9 +186,12 @@ export function Reservas({ Voltar, onLogout, IrParaAjuda }: ReservasProps) {
                           className="flex gap-3 rounded-2xl bg-white/60 px-5 py-3"
                         >
                           {livro.capa && (
-                            <img
+                            <Image
                               src={livro.capa}
                               alt=""
+                              width={48}
+                              height={64}
+                              unoptimized
                               className="w-12 h-16 object-cover"
                             />
                           )}
