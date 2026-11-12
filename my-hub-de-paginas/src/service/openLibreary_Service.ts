@@ -6,7 +6,9 @@ export interface LivroExterno {
   capa: string | null;
 }
 
-export async function buscarLivrosExternos(busca: string): Promise<LivroExterno[]> {
+export async function buscarLivrosExternos(
+  busca: string,
+): Promise<LivroExterno[]> {
   if (!busca) return [];
 
   const url =

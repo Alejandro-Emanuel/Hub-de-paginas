@@ -1,8 +1,8 @@
-import {prisma} from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 
 export async function buscarMultas() {
-    const multas = await prisma.multa.findMany({
-        include: {
+  const multas = await prisma.multa.findMany({
+    include: {
       devolucao: {
         include: {
           emprestimo: {
@@ -23,15 +23,20 @@ export async function buscarMultas() {
     const emprestimo = m.devolucao.emprestimo;
     const perfil = emprestimo.usuario.perfil;
 
-    return{
-        id: m.id,
-        usuario: perfil.nome,
-        email: perfil.email,
-        livro: (emprestimo.livro as unknown as { nome: string }).nome,
-        motivo: m.dias_atraso > 0 ? `Atraso na devolução (${m.dias_atraso} dias)` : "multa adimistrativa",
-        valor: Number(m.valor),
-        vencimento: emprestimo.data_prevista_devolucao.toISOString().split("T")[0],
-        status: m.status as "Pendente" | "Paga" | "Cancelada",
+    return {
+      id: m.id,
+      usuario: perfil.nome,
+      email: perfil.email,
+      livro: (emprestimo.livro as unknown as { nome: string }).nome,
+      motivo:
+        m.dias_atraso > 0
+          ? `Atraso na devolução (${m.dias_atraso} dias)`
+          : "multa adimistrativa",
+      valor: Number(m.valor),
+      vencimento: emprestimo.data_prevista_devolucao
+        .toISOString()
+        .split("T")[0],
+      status: m.status as "Pendente" | "Paga" | "Cancelada",
     };
   });
 }

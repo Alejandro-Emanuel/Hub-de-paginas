@@ -30,7 +30,12 @@ export async function buscarLivros(termoBusca: string) {
       ? {
           OR: [
             { nome: { contains: termoBusca, mode: "insensitive" as const } },
-            { nome_do_autor: { contains: termoBusca, mode: "insensitive" as const } },
+            {
+              nome_do_autor: {
+                contains: termoBusca,
+                mode: "insensitive" as const,
+              },
+            },
             { genero: { contains: termoBusca, mode: "insensitive" as const } },
           ],
         }
