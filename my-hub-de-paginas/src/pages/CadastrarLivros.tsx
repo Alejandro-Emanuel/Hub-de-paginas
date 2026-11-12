@@ -11,9 +11,11 @@ import marcador from "../assets/iconeCards/Marcador.png";
 
 interface CadastrarLivrosProps {
   Voltar: () => void;
+  Ajuda: () => void;
+  Reservas: () => void; 
 }
 
-export function CadastrarLivros({ Voltar }: CadastrarLivrosProps) {
+export function CadastrarLivros({ Voltar, Ajuda, Reservas }: CadastrarLivrosProps) {
   const [titulo, setTitulo] = useState("");
   const [autor, setAutor] = useState("");
   const [editora, setEditora] = useState("");
@@ -79,24 +81,14 @@ export function CadastrarLivros({ Voltar }: CadastrarLivrosProps) {
         <Image src={perfil} alt="Perfil" className="w-20 h-20 rounded-full mx-auto" />
         <hr />
 
-        <BarraLateral.Item>
-          <Image
-            src={ajudaIcon}
-            alt="Ajuda"
-            width={40}
-            height={40}
-            className="mx-auto"
-          />
+        <BarraLateral.Item onClick={Ajuda}>
+          <Image src={ajudaIcon} alt="Ajuda" className="w-6 h-6" />
+          Ajuda
         </BarraLateral.Item>
 
-        <BarraLateral.Item>
-          <Image
-            src={marcador}
-            alt="Marcador"
-            width={40}
-            height={40}
-            className="mx-auto"
-          />
+        <BarraLateral.Item onClick={Reservas}>
+          <Image src={marcador} alt="Ajuda" className="w-6 h-6" />
+          Reservas
         </BarraLateral.Item>
 
         <BarraLateral.Item>

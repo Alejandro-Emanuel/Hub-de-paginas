@@ -9,17 +9,23 @@ import { Relatorios } from "@/pages/relatorios";
 import { Reservas } from "@/pages/reservas";
 import { Help } from "@/pages/help";
 import { Multas } from "@/pages/Multas";
+import { DashboardUsuario } from "@/pages/dashboardUsuario";
+import { HistoricoUsuario } from "@/pages/historicoUsuario";
+import { EmprestimosDevolucoes } from "@/pages/emprestimosDevolucoes";
 
 type Tela =
   | "login"
   | "cadastro"
   | "dashboardAdm"
   | "cadastrarLivros"
-  | "emprestimos"
+  | "dashboardUsuario"
+  | "historicoUsuario"
+  | "emprestimosDevolucoes"
   | "reservas"
   | "multas"
   | "help"
-  | "relatorios";
+  | "relatorios"
+  | "perfilUsuario";
 
 export default function Home() {
   const [tela, setTela] = useState<Tela>("login");
@@ -36,9 +42,36 @@ export default function Home() {
     return <DashboardAdm onLogout={() => setTela("login")} IrPara={setTela} />;
   }
 
-  if (tela === "cadastrarLivros") {
-    return <CadastrarLivros Voltar={() => setTela("dashboardAdm")} />;
+  if (tela === "dashboardUsuario") {
+    return <DashboardUsuario onLogout={() => setTela("login")} IrPara={setTela} />;
   }
+
+  if (tela === "cadastrarLivros") {
+    return (<CadastrarLivros 
+    Voltar={() => setTela("dashboardAdm")} 
+    Reservas={() => setTela("reservas")}
+    Ajuda={() => setTela("help")}
+    />
+    );
+  }
+
+  if (tela === "emprestimosDevolucoes") {
+  return (
+    <EmprestimosDevolucoes
+      onLogout={() => setTela("login")}
+      IrPara={setTela}
+    />
+  );
+}
+
+if (tela === "historicoUsuario") {
+  return (
+    <HistoricoUsuario
+      onLogout={() => setTela("login")}
+      IrPara={setTela}
+    />
+  );
+}
 
   if (tela === "reservas") {
     return (

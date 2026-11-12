@@ -1,17 +1,15 @@
 "use client";
 
-import { BarraLateral } from "../components/BarraLateral";
-import telaFundo from "../assets/iconeCards/telaDeFundo.png";
-import perfil from "../assets/iconeCards/Perfil.png";
+import { useEffect, useState } from "react";
 import Image from "next/image";
-import interrogacao from "../assets/iconeCards/interrogaçãoIcon.png";
-import marcador from "../assets/iconeCards/Marcador.png";
+import { BarraLateral } from "../components/BarraLateral";
 import { Titulo } from "../components/Titulo";
 import { CardIcone } from "../components/CardsDashboard";
+import telaFundo from "../assets/iconeCards/telaDeFundo.png";
+import perfil from "../assets/iconeCards/Perfil.png";
 import livroIcone from "../assets/iconeCards/Livro.png";
 import renovacaoIcone from "../assets/iconeCards/casinhaIcon.png";
-import { useEffect, useState } from "react";
-import sair from "@/assets/iconeCards/Log out.png"
+import ajudaIcon from "@/assets/iconeCards/interrogaçãoIcon.png"
 
 interface Livro {
   id: number;
@@ -22,11 +20,12 @@ interface Livro {
   genero: string;
 }
 
-interface Emprestimo {
-  id: number;
-  usuario_id: number;
-  livro_id: number;
-  data_prevista_devolucao: string;
+interface LivroExterno {
+  titulo: string;
+  autor: string;
+  ano: number | null;
+  editora: string;
+  capa: string | null;
 }
 
 interface ReservasProps {
@@ -35,39 +34,44 @@ interface ReservasProps {
   IrParaAjuda: () => void;
 }
 
-type Painel = "buscar" | "renovacao" | null;
-
-export function Reservas({ Voltar, onLogout, IrParaAjuda}: ReservasProps) {
-  const [painel, setPainel] = useState<Painel>(null);
+export function Reservas({ Voltar, onLogout, IrParaAjuda }: ReservasProps) {
+  const [painel, setPainel] = useState<"buscar" | "renovacao" | null>(null);
   const [busca, setBusca] = useState("");
   const [livros, setLivros] = useState<Livro[]>([]);
-  const [carregado, setCarregado] = useState(false);
+  const [externos, setExternos] = useState<LivroExterno[]>([]);
   const [erro, setErro] = useState("");
 
-  // Estados para gerenciar os empréstimos e a renovação
-  const [emprestimos, setEmprestimos] = useState<Emprestimo[]>([]);
-  const [erroRenovacao, setErroRenovacao] = useState("");
-
+  // Roda quando o painel de busca está aberto e sempre que o texto muda
   useEffect(() => {
     if (painel !== "buscar") return;
 
     let cancelado = false;
 
     const timer = setTimeout(async () => {
+      // 1) Livros da sua biblioteca (banco)
       try {
-        const resposta = await fetch(
+        const res = await fetch(
           `/api/livros?busca=${encodeURIComponent(busca)}`,
         );
-        if (!resposta.ok) throw new Error("Falha na busca");
-
-        const dados: Livro[] = await resposta.json();
+        if (!res.ok) throw new Error("Falha");
+        const dados: Livro[] = await res.json();
         if (!cancelado) {
           setLivros(dados);
           setErro("");
-          setCarregado(true);
         }
       } catch {
         if (!cancelado) setErro("Não foi possível carregar os livros.");
+      }
+
+      // 2) Livros externos (Open Library). Se falhar, a lista fica vazia.
+      try {
+        const resExt = await fetch(
+          `/api/livros/externo?busca=${encodeURIComponent(busca)}`,
+        );
+        if (resExt.ok && !cancelado) setExternos(await resExt.json());
+        else if (!cancelado) setExternos([]);
+      } catch {
+        if (!cancelado) setExternos([]);
       }
     }, 300);
 
@@ -77,56 +81,10 @@ export function Reservas({ Voltar, onLogout, IrParaAjuda}: ReservasProps) {
     };
   }, [painel, busca]);
 
-  // Effect para buscar empréstimos ativos quando o painel for "renovacao"
-  useEffect(() => {
-    if (painel !== "renovacao") return;
-
-    const usuarioIdLogado = 1; // Ajuste conforme o ID do usuário logado no seu sistema
-
-    async function carregarEmprestimos() {
-      try {
-        const resposta = await fetch(`/api/emprestimos?usuarioId=${usuarioIdLogado}`);
-        if (!resposta.ok) throw new Error("Erro ao carregar");
-        const dados = await resposta.json();
-        setEmprestimos(dados);
-        setErroRenovacao("");
-      } catch {
-        setErroRenovacao("Não foi possível carregar seus empréstimos.");
-      }
-    }
-
-    carregarEmprestimos();
-  }, [painel]);
-
-  // Função para chamar a API de renovação de empréstimo
-  const handleRenovar = async (emprestimoId: number) => {
-    try {
-      const resposta = await fetch("/api/emprestimos", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ emprestimoId }),
-      });
-
-      if (!resposta.ok) throw new Error("Falha ao renovar");
-
-      const resultado = await resposta.json();
-      alert(resultado.mensagem || "Empréstimo renovado com sucesso!");
-
-      // Atualiza a data na lista localmente para refletir na tela na mesma hora
-      setEmprestimos(emprestimos.map(e => 
-        e.id === emprestimoId 
-          ? { ...e, data_prevista_devolucao: resultado.emprestimo.data_prevista_devolucao } 
-          : e
-      ));
-    } catch {
-      alert("Erro ao tentar renovar o empréstimo.");
-    }
-  };
-
-  const handleLogout = () => {
+  function handleLogout() {
     localStorage.removeItem("token");
     onLogout();
-  };
+  }
 
   return (
     <div
@@ -140,16 +98,12 @@ export function Reservas({ Voltar, onLogout, IrParaAjuda}: ReservasProps) {
           className="w-20 h-20 rounded-full mx-auto"
         />
         <hr />
-
         <BarraLateral.Item onClick={IrParaAjuda}>
-          <Image src={interrogacao} alt="Ajuda" className="w-6 h-6" />
+          <Image src={ajudaIcon} alt="Ajuda" className="w-6 h-6" />
           Ajuda
         </BarraLateral.Item>
 
-        <BarraLateral.Item>
-          <Image src={marcador} alt="Histórico" className="w-6 h-6" />
-          Histórico
-        </BarraLateral.Item>
+        <BarraLateral.Item onClick={Voltar}>← Voltar</BarraLateral.Item>
 
         <div className="mt-auto">
           <BarraLateral.Item onClick={() => { handleLogout(); Voltar(); }}>
@@ -163,6 +117,7 @@ export function Reservas({ Voltar, onLogout, IrParaAjuda}: ReservasProps) {
         <Titulo>Reservas</Titulo>
 
         <div className="flex flex-1 gap-8">
+          {/* Coluna dos dois botões */}
           <div className="flex flex-col justify-around">
             <CardIcone.Root onClick={() => setPainel("buscar")}>
               <Image
@@ -183,7 +138,8 @@ export function Reservas({ Voltar, onLogout, IrParaAjuda}: ReservasProps) {
             </CardIcone.Root>
           </div>
 
-          <section className="flex-1 bg-[#FFF8E1] text-[#4A5546] rounded-4xl shadow-lg p-6 min-h-96 max-h-[75vh] overflow-y-auto flex flex-col">
+          {/* Painel da direita */}
+          <section className="flex-1 bg-[#FFF8E1] text-[#4A5546] rounded-4xl shadow-lg p-6 min-h-96 max-h-[75vh] overflow-y-auto flex flex-col gap-4">
             {painel === null && (
               <p className="m-auto text-center font-serif italic">
                 Escolha uma opção
@@ -191,7 +147,7 @@ export function Reservas({ Voltar, onLogout, IrParaAjuda}: ReservasProps) {
             )}
 
             {painel === "buscar" && (
-              <div className="flex flex-col gap-4">
+              <>
                 <input
                   type="text"
                   value={busca}
@@ -201,12 +157,6 @@ export function Reservas({ Voltar, onLogout, IrParaAjuda}: ReservasProps) {
                 />
 
                 {erro && <p className="text-sm text-red-600">{erro}</p>}
-
-                {carregado && livros.length === 0 && !erro && (
-                  <p className="text-center font-serif italic">
-                    Nenhum livro encontrado.
-                  </p>
-                )}
 
                 <ul className="flex flex-col gap-3">
                   {livros.map((livro) => (
@@ -224,43 +174,46 @@ export function Reservas({ Voltar, onLogout, IrParaAjuda}: ReservasProps) {
                     </li>
                   ))}
                 </ul>
-              </div>
+
+                {externos.length > 0 && (
+                  <>
+                    <p className="font-serif italic text-sm">
+                      Resultados externos
+                    </p>
+                    <ul className="flex flex-col gap-3">
+                      {externos.map((livro, i) => (
+                        <li
+                          key={i}
+                          className="flex gap-3 rounded-2xl bg-white/60 px-5 py-3"
+                        >
+                          {livro.capa && (
+                            <img
+                              src={livro.capa}
+                              alt=""
+                              className="w-12 h-16 object-cover"
+                            />
+                          )}
+                          <div>
+                            <p className="font-serif italic font-bold">
+                              {livro.titulo}
+                            </p>
+                            <p className="text-sm">
+                              {livro.autor} · {livro.editora} ·{" "}
+                              {livro.ano ?? "s/ ano"}
+                            </p>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+              </>
             )}
 
             {painel === "renovacao" && (
-              <div className="flex flex-col gap-4">
-                <h3 className="font-serif italic font-bold text-lg">Meus Empréstimos Ativos</h3>
-
-                {erroRenovacao && <p className="text-sm text-red-600">{erroRenovacao}</p>}
-
-                {emprestimos.length === 0 && !erroRenovacao && (
-                  <p className="text-center font-serif italic">
-                    Você não possui empréstimos ativos no momento.
-                  </p>
-                )}
-
-                <ul className="flex flex-col gap-3">
-                  {emprestimos.map((emp) => (
-                    <li
-                      key={emp.id}
-                      className="rounded-2xl bg-white/60 px-5 py-3 flex justify-between items-center"
-                    >
-                      <div>
-                        <p className="font-serif italic font-bold">Empréstimo #{emp.id}</p>
-                        <p className="text-sm">
-                          Devolução prevista para: {new Date(emp.data_prevista_devolucao).toLocaleDateString()}
-                        </p>
-                      </div>
-                      <button
-                        onClick={() => handleRenovar(emp.id)}
-                        className="bg-[#4A5546] text-[#FFF8E1] px-4 py-2 rounded-full text-sm font-bold hover:opacity-90 transition cursor-pointer"
-                      >
-                        Renovar (+7 dias)
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+              <p className="m-auto text-center font-serif italic">
+                Em breve: aqui aparecerão os seus empréstimos para renovar.
+              </p>
             )}
           </section>
         </div>
