@@ -10,7 +10,7 @@ export async function obterMétricasDashboard() {
       totalMultasPendentes,
     ] = await Promise.all([
       prisma.cadastro_livro.count(),
-      prisma.emprestimo.count(),
+      prisma.emprestimo.count({where: { devolucao: null}}),
       prisma.reserva.count(),
       prisma.multa.count({
         where: { status: "Pendente" },
