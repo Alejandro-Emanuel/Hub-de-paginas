@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useMemo, useState } from "react";
@@ -71,10 +70,7 @@ const livros: Livro[] = [
 
 const categorias = ["Ação", "Romance", "Terror", "Sci-fi", "Drama"];
 
-export function DashboardUsuario({
-  onLogout,
-  IrPara,
-}: DashboardUsuarioProps) {
+export function DashboardUsuario({ onLogout, IrPara }: DashboardUsuarioProps) {
   const [pesquisa, setPesquisa] = useState("");
   const [categoriaAtiva, setCategoriaAtiva] = useState("Todos");
   const [mostrarTodos, setMostrarTodos] = useState(false);
@@ -88,8 +84,7 @@ export function DashboardUsuario({
         livro.categoria.toLowerCase().includes(pesquisa.toLowerCase());
 
       const correspondeCategoria =
-        categoriaAtiva === "Todos" ||
-        livro.categoria === categoriaAtiva;
+        categoriaAtiva === "Todos" || livro.categoria === categoriaAtiva;
 
       return correspondePesquisa && correspondeCategoria;
     });
@@ -106,11 +101,8 @@ export function DashboardUsuario({
 
   return (
     <main className="min-h-screen w-full bg-[#c5cbaa] p-3 sm:p-5 flex flex-col md:flex-row gap-5">
-
       <aside className="w-full md:w-[165px] md:min-h-[calc(100vh-40px)] flex flex-col justify-between gap-5 shrink-0">
-
         <div className="rounded-[28px] bg-[#f8f5df] px-4 py-5 shadow-sm">
-
           <div className="flex items-center justify-center gap-2 border-b border-[#a6ad91] pb-3">
             <span className="text-2xl text-[#333d32]">▣</span>
 
@@ -120,7 +112,6 @@ export function DashboardUsuario({
           </div>
 
           <nav className="mt-5 flex flex-row md:flex-col gap-4 md:gap-7 flex-wrap">
-
             <button
               onClick={() => {
                 setPesquisa("");
@@ -158,27 +149,23 @@ export function DashboardUsuario({
               </span>
             </button>
 
-           <button onClick={() => IrPara("historico")}>
-  <span className="text-xl">▤</span>
-  <span className="font-serif italic font-bold text-sm">
-    Histórico
-  </span>
-</button>
-
+            <button onClick={() => IrPara("historico")}>
+              <span className="text-xl">▤</span>
+              <span className="font-serif italic font-bold text-sm">
+                Histórico
+              </span>
+            </button>
           </nav>
         </div>
 
         <div className="rounded-[26px] bg-[#f8f5df] px-4 py-4 shadow-sm flex flex-row md:flex-col gap-4">
-
           <button
             onClick={() => IrPara("help")}
             className="flex items-center gap-3 text-[#5c6b57] hover:text-[#283a2d] transition"
           >
             <span className="text-xl">ⓘ</span>
 
-            <span className="font-serif italic font-bold text-sm">
-              Ajuda
-            </span>
+            <span className="font-serif italic font-bold text-sm">Ajuda</span>
           </button>
 
           <button
@@ -187,23 +174,15 @@ export function DashboardUsuario({
           >
             <span className="text-xl">⇥</span>
 
-            <span className="font-serif italic font-bold text-sm">
-              Log out
-            </span>
+            <span className="font-serif italic font-bold text-sm">Log out</span>
           </button>
-
         </div>
       </aside>
 
       <section className="flex-1 min-w-0 flex flex-col gap-4">
-
         <header className="flex items-center gap-4">
-
           <div className="flex-1 h-[48px] rounded-full bg-[#faf8e9] flex items-center px-5 shadow-sm">
-
-            <span className="text-xl text-[#69715e] mr-4">
-              ☰
-            </span>
+            <span className="text-xl text-[#69715e] mr-4">☰</span>
 
             <input
               type="text"
@@ -213,10 +192,7 @@ export function DashboardUsuario({
               className="w-full bg-transparent outline-none text-[#4e5749] placeholder:text-[#626454] text-sm"
             />
 
-            <span className="text-2xl text-[#444b3e]">
-              ⌕
-            </span>
-
+            <span className="text-2xl text-[#444b3e]">⌕</span>
           </div>
 
           <button
@@ -232,12 +208,7 @@ export function DashboardUsuario({
             >
               <circle cx="20" cy="20" r="17" fill="#78836f" />
 
-              <circle
-                cx="20"
-                cy="14"
-                r="6"
-                fill="#f8f5df"
-              />
+              <circle cx="20" cy="14" r="6" fill="#f8f5df" />
 
               <path
                 d="M8 31C9.5 24.5 14 21 20 21C26 21 30.5 24.5 32 31"
@@ -245,13 +216,10 @@ export function DashboardUsuario({
               />
             </svg>
           </button>
-
         </header>
 
         <div className="flex-1 rounded-[32px] bg-[#f8f5e4] px-5 sm:px-7 py-6 shadow-sm overflow-hidden">
-
           <div className="flex items-center justify-between mb-6">
-
             <h1 className="font-serif italic font-bold tracking-[2px] text-[#52644f] text-lg">
               Recomendados:
             </h1>
@@ -262,21 +230,16 @@ export function DashboardUsuario({
             >
               {mostrarTodos ? "Ver menos" : "Ver mais >"}
             </button>
-
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-5 gap-y-8">
-
             {livrosExibidos.map((livro) => (
-
               <button
                 key={livro.id}
                 onClick={() => setLivroSelecionado(livro)}
                 className="flex flex-col items-center group"
               >
-
                 <div className="relative w-[145px] h-[190px] rounded-[12px] bg-gradient-to-br from-[#8b6753] to-[#3b2924] border-[5px] border-[#211714] shadow-[0_5px_9px_rgba(0,0,0,0.25)] overflow-hidden flex flex-col items-center justify-center transition-transform group-hover:-translate-y-1">
-
                   <div className="absolute inset-[5px] border border-[#c3a58b]/70 rounded-[5px]" />
 
                   <div className="absolute top-7 w-16 h-16 rounded-full border border-[#d8bda0]/50" />
@@ -294,7 +257,6 @@ export function DashboardUsuario({
                       C.M. KOSEMEN
                     </p>
                   </div>
-
                 </div>
 
                 <h2 className="mt-3 font-serif italic font-bold text-[#60735c] text-lg tracking-wide">
@@ -304,11 +266,8 @@ export function DashboardUsuario({
                 <p className="font-serif italic font-bold text-[#64715e] text-xs">
                   {livro.autor}
                 </p>
-
               </button>
-
             ))}
-
           </div>
 
           {livrosExibidos.length === 0 && (
@@ -318,22 +277,17 @@ export function DashboardUsuario({
           )}
 
           <div className="mt-10">
-
             <h2 className="font-serif italic font-bold tracking-[2px] text-[#52644f] text-lg mb-4">
               Categorias:
             </h2>
 
             <div className="flex flex-wrap items-center gap-3">
-
               {categorias.map((categoria) => (
-
                 <button
                   key={categoria}
                   onClick={() => {
                     setCategoriaAtiva(
-                      categoriaAtiva === categoria
-                        ? "Todos"
-                        : categoria
+                      categoriaAtiva === categoria ? "Todos" : categoria,
                     );
 
                     setMostrarTodos(true);
@@ -346,7 +300,6 @@ export function DashboardUsuario({
                 >
                   {categoria}
                 </button>
-
               ))}
 
               <button
@@ -358,21 +311,15 @@ export function DashboardUsuario({
               >
                 Next →
               </button>
-
             </div>
           </div>
-
         </div>
       </section>
 
       {livroSelecionado && (
-
         <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
-
           <div className="w-full max-w-md rounded-[25px] bg-[#f8f5e4] p-6 shadow-xl">
-
             <div className="flex justify-between items-center mb-5">
-
               <h2 className="font-serif italic font-bold text-xl text-[#52644f]">
                 Informações do livro
               </h2>
@@ -383,18 +330,14 @@ export function DashboardUsuario({
               >
                 ×
               </button>
-
             </div>
 
             <div className="text-center">
-
               <h3 className="font-serif italic font-bold text-2xl text-[#52644f]">
                 {livroSelecionado.titulo}
               </h3>
 
-              <p className="text-[#68745e] mt-1">
-                {livroSelecionado.autor}
-              </p>
+              <p className="text-[#68745e] mt-1">{livroSelecionado.autor}</p>
 
               <p className="text-sm text-[#68745e] mt-4">
                 Categoria: {livroSelecionado.categoria}
@@ -403,7 +346,6 @@ export function DashboardUsuario({
               <p className="text-sm text-[#68745e] mt-2">
                 {livroSelecionado.descricao}
               </p>
-
             </div>
 
             <button
@@ -412,12 +354,9 @@ export function DashboardUsuario({
             >
               Fechar
             </button>
-
           </div>
         </div>
-
       )}
-
     </main>
   );
 }
