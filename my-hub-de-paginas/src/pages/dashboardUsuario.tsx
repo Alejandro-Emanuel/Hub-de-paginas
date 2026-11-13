@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 type TelaUsuario =
   | "historicoUsuario"
@@ -20,79 +20,104 @@ interface Livro {
   titulo: string;
   autor: string;
   categoria: string;
-  descricao: string;
+  editora: string;
+  ano: number;
 }
 
-const livros: Livro[] = [
-  {
-    id: 1,
-    titulo: "All Tomorrows",
-    autor: "C.M Kosemen",
-    categoria: "Sci-fi",
-    descricao: "Uma jornada pela evolução e pelo futuro da humanidade.",
-  },
-  {
-    id: 2,
-    titulo: "All Tomorrows",
-    autor: "C.M Kosemen",
-    categoria: "Sci-fi",
-    descricao: "Uma jornada pela evolução e pelo futuro da humanidade.",
-  },
-  {
-    id: 3,
-    titulo: "All Tomorrows",
-    autor: "C.M Kosemen",
-    categoria: "Sci-fi",
-    descricao: "Uma jornada pela evolução e pelo futuro da humanidade.",
-  },
-  {
-    id: 4,
-    titulo: "O Jardim Secreto",
-    autor: "Frances Hodgson",
-    categoria: "Drama",
-    descricao: "Uma história sobre amizade, descoberta e transformação.",
-  },
-  {
-    id: 5,
-    titulo: "O Chamado de Cthulhu",
-    autor: "H. P. Lovecraft",
-    categoria: "Terror",
-    descricao: "Um mistério envolvendo forças antigas e desconhecidas.",
-  },
-  {
-    id: 6,
-    titulo: "Orgulho e Preconceito",
-    autor: "Jane Austen",
-    categoria: "Romance",
-    descricao: "Um clássico sobre relacionamentos e diferenças sociais.",
-  },
-];
-
-const categorias = ["Ação", "Romance", "Terror", "Sci-fi", "Drama"];
+interface DashboardUsuarioData {
+  livros: Livro[];
+  categorias: string[];
+}
 
 export function DashboardUsuario({ onLogout, IrPara }: DashboardUsuarioProps) {
+  const [livros, setLivros] = useState<Livro[]>([]);
+  const [categorias, setCategorias] = useState<string[]>([]);
+  const [carregando, setCarregando] = useState(true);
+  const [erro, setErro] = useState("");
   const [pesquisa, setPesquisa] = useState("");
   const [categoriaAtiva, setCategoriaAtiva] = useState("Todos");
   const [mostrarTodos, setMostrarTodos] = useState(false);
   const [livroSelecionado, setLivroSelecionado] = useState<Livro | null>(null);
 
-  const livrosFiltrados = useMemo(() => {
-    return livros.filter((livro) => {
-      const correspondePesquisa =
-        livro.titulo.toLowerCase().includes(pesquisa.toLowerCase()) ||
-        livro.autor.toLowerCase().includes(pesquisa.toLowerCase()) ||
-        livro.categoria.toLowerCase().includes(pesquisa.toLowerCase());
+  useEffect(() => {
+    let cancelado = false;
+    const controller = new AbortController();
 
-      const correspondeCategoria =
-        categoriaAtiva === "Todos" || livro.categoria === categoriaAtiva;
+    async function carregarLivros() {
+      setCarregando(true);
+      setErro("");
 
-      return correspondePesquisa && correspondeCategoria;
-    });
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          throw new Error("Sua sessão expirou. Entre novamente.");
+        }
+
+        const parametros = new URLSearchParams();
+        if (pesquisa.trim()) parametros.set("busca", pesquisa.trim());
+        if (categoriaAtiva !== "Todos") {
+          parametros.set("categoria", categoriaAtiva);
+        }
+
+        const resposta = await fetch(
+          `/api/dashboard-usuario?${parametros.toString()}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+            signal: controller.signal,
+          },
+        );
+
+        if (resposta.status === 401) {
+          throw new Error("Sua sessão expirou. Entre novamente.");
+        }
+        if (resposta.status === 403) {
+          throw new Error("Esta área é exclusiva para contas de usuário.");
+        }
+        if (!resposta.ok) {
+          throw new Error("Não foi possível carregar os livros.");
+        }
+
+        const dados: DashboardUsuarioData = await resposta.json();
+        if (
+          !Array.isArray(dados.livros) ||
+          !Array.isArray(dados.categorias)
+        ) {
+          throw new Error("A resposta do dashboard está inválida.");
+        }
+
+        if (!cancelado) {
+          setLivros(dados.livros);
+          setCategorias(dados.categorias);
+        }
+      } catch (error) {
+        if (error instanceof Error && error.name === "AbortError") return;
+        console.error("Erro ao carregar livros do dashboard:", error);
+        if (!cancelado) {
+          setErro(
+            error instanceof Error
+              ? error.message
+              : "Não foi possível carregar os livros.",
+          );
+        }
+      } finally {
+        if (!cancelado) setCarregando(false);
+      }
+    }
+
+    const timer = setTimeout(() => {
+      void carregarLivros();
+    }, 300);
+
+    return () => {
+      cancelado = true;
+      clearTimeout(timer);
+      controller.abort();
+    };
   }, [pesquisa, categoriaAtiva]);
 
   const livrosExibidos = mostrarTodos
-    ? livrosFiltrados
-    : livrosFiltrados.slice(0, 3);
+    ? livros
+    : livros.slice(0, 3);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -181,7 +206,7 @@ export function DashboardUsuario({ onLogout, IrPara }: DashboardUsuarioProps) {
 
       <section className="flex-1 min-w-0 flex flex-col gap-4">
         <header className="flex items-center gap-4">
-          <div className="flex-1 h-[48px] rounded-full bg-[#faf8e9] flex items-center px-5 shadow-sm">
+          <div className="flex-1 h-12 rounded-full bg-[#faf8e9] flex items-center px-5 shadow-sm">
             <span className="text-xl text-[#69715e] mr-4">☰</span>
 
             <input
@@ -198,7 +223,7 @@ export function DashboardUsuario({ onLogout, IrPara }: DashboardUsuarioProps) {
           <button
             onClick={() => IrPara("perfilUsuario")}
             aria-label="Abrir perfil"
-            className="w-[72px] h-[48px] rounded-[20px] bg-[#faf8e9] flex items-center justify-center text-[#737d6b] hover:bg-white transition shadow-sm"
+            className="w-18 h-12 rounded-[20px] bg-[#faf8e9] flex items-center justify-center text-[#737d6b] hover:bg-white transition shadow-sm"
           >
             <svg
               viewBox="0 0 40 40"
@@ -218,7 +243,7 @@ export function DashboardUsuario({ onLogout, IrPara }: DashboardUsuarioProps) {
           </button>
         </header>
 
-        <div className="flex-1 rounded-[32px] bg-[#f8f5e4] px-5 sm:px-7 py-6 shadow-sm overflow-hidden">
+        <div className="flex-1 rounded-4xl bg-[#f8f5e4] px-5 sm:px-7 py-6 shadow-sm overflow-hidden">
           <div className="flex items-center justify-between mb-6">
             <h1 className="font-serif italic font-bold tracking-[2px] text-[#52644f] text-lg">
               Recomendados:
@@ -232,48 +257,60 @@ export function DashboardUsuario({ onLogout, IrPara }: DashboardUsuarioProps) {
             </button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-5 gap-y-8">
-            {livrosExibidos.map((livro) => (
-              <button
-                key={livro.id}
-                onClick={() => setLivroSelecionado(livro)}
-                className="flex flex-col items-center group"
-              >
-                <div className="relative w-[145px] h-[190px] rounded-[12px] bg-gradient-to-br from-[#8b6753] to-[#3b2924] border-[5px] border-[#211714] shadow-[0_5px_9px_rgba(0,0,0,0.25)] overflow-hidden flex flex-col items-center justify-center transition-transform group-hover:-translate-y-1">
-                  <div className="absolute inset-[5px] border border-[#c3a58b]/70 rounded-[5px]" />
-
-                  <div className="absolute top-7 w-16 h-16 rounded-full border border-[#d8bda0]/50" />
-
-                  <div className="text-[#d9c2a7] text-5xl leading-none opacity-90">
-                    ⚝
-                  </div>
-
-                  <div className="mt-8 text-center px-2">
-                    <p className="font-serif text-[9px] tracking-wide text-[#e7d4bd]">
-                      ALL TOMORROWS
-                    </p>
-
-                    <p className="font-serif text-[7px] text-[#d1b89e]">
-                      C.M. KOSEMEN
-                    </p>
-                  </div>
-                </div>
-
-                <h2 className="mt-3 font-serif italic font-bold text-[#60735c] text-lg tracking-wide">
-                  {livro.titulo}
-                </h2>
-
-                <p className="font-serif italic font-bold text-[#64715e] text-xs">
-                  {livro.autor}
-                </p>
-              </button>
-            ))}
-          </div>
-
-          {livrosExibidos.length === 0 && (
+          {carregando ? (
             <div className="py-12 text-center text-[#69735f] font-serif italic">
-              Nenhum livro encontrado.
+              Carregando livros...
             </div>
+          ) : erro ? (
+            <div role="alert" className="py-12 text-center text-red-700">
+              {erro}
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-5 gap-y-8">
+                {livrosExibidos.map((livro) => (
+                  <button
+                    key={livro.id}
+                    onClick={() => setLivroSelecionado(livro)}
+                    className="flex flex-col items-center group"
+                  >
+                    <div className="relative w-36.25 h-47.5 rounded-xl bg-linear-to-br from-[#8b6753] to-[#3b2924] border-[5px] border-[#211714] shadow-[0_5px_9px_rgba(0,0,0,0.25)] overflow-hidden flex flex-col items-center justify-center transition-transform group-hover:-translate-y-1">
+                      <div className="absolute inset-1.25 border border-[#c3a58b]/70 rounded-[5px]" />
+
+                      <div className="absolute top-7 w-16 h-16 rounded-full border border-[#d8bda0]/50" />
+
+                      <div className="text-[#d9c2a7] text-5xl leading-none opacity-90">
+                        ⚝
+                      </div>
+
+                      <div className="mt-8 text-center px-2">
+                        <p className="font-serif text-[9px] tracking-wide text-[#e7d4bd]">
+                          {livro.titulo}
+                        </p>
+
+                        <p className="font-serif text-[7px] text-[#d1b89e]">
+                          {livro.autor}
+                        </p>
+                      </div>
+                    </div>
+
+                    <h2 className="mt-3 font-serif italic font-bold text-[#60735c] text-lg tracking-wide">
+                      {livro.titulo}
+                    </h2>
+
+                    <p className="font-serif italic font-bold text-[#64715e] text-xs">
+                      {livro.autor}
+                    </p>
+                  </button>
+                ))}
+              </div>
+
+              {livros.length === 0 && (
+                <div className="py-12 text-center text-[#69735f] font-serif italic">
+                  Nenhum livro encontrado.
+                </div>
+              )}
+            </>
           )}
 
           <div className="mt-10">
@@ -344,7 +381,11 @@ export function DashboardUsuario({ onLogout, IrPara }: DashboardUsuarioProps) {
               </p>
 
               <p className="text-sm text-[#68745e] mt-2">
-                {livroSelecionado.descricao}
+                Editora: {livroSelecionado.editora}
+              </p>
+
+              <p className="text-sm text-[#68745e] mt-2">
+                Ano: {livroSelecionado.ano}
               </p>
             </div>
 

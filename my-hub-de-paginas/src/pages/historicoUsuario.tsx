@@ -201,7 +201,7 @@ export function HistoricoUsuario({ onLogout, IrPara }: HistoricoUsuarioProps) {
           </button>
         </header>
 
-        <section className="flex-1 bg-[#f8f5e4] rounded-[28px] px-5 sm:px-8 py-6 shadow-sm min-h-[500px]">
+        <section className="flex-1 bg-[#f8f5e4] rounded-[28px] px-5 sm:px-8 py-6 shadow-sm min-h-125">
           <div className="flex items-center justify-center mb-7">
             <h1 className="font-serif italic font-bold tracking-[2px] text-[#52644f] text-lg">
               Seu Histórico:
@@ -215,7 +215,7 @@ export function HistoricoUsuario({ onLogout, IrPara }: HistoricoUsuarioProps) {
                 onClick={() => setLivroSelecionado(livro)}
                 className="flex items-center gap-3 sm:gap-4 text-left group min-w-0"
               >
-                <div className="w-75px h-105px sm:w-62px sm:h-82px shrink-0 rounded-[10px] border-[3px] border-[#241916] bg-gradient-to-br from-[#96735d] to-[#38251f] shadow-[0_3px_7px_rgba(0,0,0,0.25)] flex flex-col items-center justify-center overflow-hidden relative group-hover:-translate-y-1 transition-transform">
+                <div className="w-75px h-105px sm:w-62px sm:h-82px shrink-0 rounded-[10px] border-[3px] border-[#241916] bg-linear-to-br from-[#96735d] to-[#38251f] shadow-[0_3px_7px_rgba(0,0,0,0.25)] flex flex-col items-center justify-center overflow-hidden relative group-hover:-translate-y-1 transition-transform">
                   <div className="absolute inset-3px border border-[#c3a58b]/60 rounded-4px" />
 
                   <span className="text-[#dfc6a7] text-2xl">⚝</span>
