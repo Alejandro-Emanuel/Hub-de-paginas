@@ -7,7 +7,7 @@ export async function buscarMultas() {
         include: {
           emprestimo: {
             include: {
-              livro: true,
+              cadastro_livro: true,
               usuario: {
                 include: {
                   perfil: true,
@@ -19,6 +19,7 @@ export async function buscarMultas() {
       },
     },
   });
+
   return multas.map((m) => {
     const emprestimo = m.devolucao.emprestimo;
     const perfil = emprestimo.usuario.perfil;
@@ -27,13 +28,13 @@ export async function buscarMultas() {
       id: m.id,
       usuario: perfil.nome,
       email: perfil.email,
-      livro: (emprestimo.livro as unknown as { nome: string }).nome,
+      livro: emprestimo.cadastro_livro.nome,
       motivo:
         m.dias_atraso > 0
           ? `Atraso na devolução (${m.dias_atraso} dias)`
-          : "multa adimistrativa",
+          : "multa administrativa",
       valor: Number(m.valor),
-      vencimento: emprestimo.data_prevista_devolucao
+      vencimento: new Date(emprestimo.data_prevista_devolucao)
         .toISOString()
         .split("T")[0],
       status: m.status as "Pendente" | "Paga" | "Cancelada",

@@ -39,7 +39,18 @@ export default function Home() {
   }
 
   if (tela === "dashboardAdm") {
-    return <DashboardAdm onLogout={() => setTela("login")} IrPara={setTela} />;
+    return (
+      <DashboardAdm
+        onLogout={() => setTela("login")}
+        IrPara={(proximaTela) =>
+          setTela(
+            proximaTela === "emprestimos"
+              ? "emprestimosDevolucoes"
+              : proximaTela,
+          )
+        }
+      />
+    );
   }
 
   if (tela === "dashboardUsuario") {
@@ -47,31 +58,52 @@ export default function Home() {
   }
 
   if (tela === "cadastrarLivros") {
-    return (<CadastrarLivros 
-    Voltar={() => setTela("dashboardAdm")} 
-    Reservas={() => setTela("reservas")}
-    Ajuda={() => setTela("help")}
-    />
+    return (
+      <CadastrarLivros 
+        Voltar={() => setTela("dashboardAdm")} 
+        Reservas={() => setTela("reservas")}
+        Ajuda={() => setTela("help")}
+      />
     );
   }
 
   if (tela === "emprestimosDevolucoes") {
-  return (
-    <EmprestimosDevolucoes
-      onLogout={() => setTela("login")}
-      IrPara={setTela}
-    />
-  );
-}
+    return (
+      <EmprestimosDevolucoes
+        onLogout={() => setTela("login")}
+        IrPara={(proximaTela) =>
+          setTela(
+            proximaTela === "livros"
+              ? "cadastrarLivros"
+              : proximaTela === "relatorio"
+                ? "relatorios"
+                : proximaTela === "historico"
+                  ? "historicoUsuario"
+                  : proximaTela === "perfil"
+                    ? "perfilUsuario"
+                    : proximaTela,
+          )
+        }
+      />
+    );
+  }
 
-if (tela === "historicoUsuario") {
-  return (
-    <HistoricoUsuario
-      onLogout={() => setTela("login")}
-      IrPara={setTela}
-    />
-  );
-}
+  if (tela === "historicoUsuario") {
+    return (
+      <HistoricoUsuario
+        onLogout={() => setTela("login")}
+        IrPara={(proximaTela) =>
+          setTela(
+            proximaTela === "emprestimos"
+              ? "emprestimosDevolucoes"
+              : proximaTela === "perfil"
+                ? "perfilUsuario"
+                : proximaTela,
+          )
+        }
+      />
+    );
+  }
 
   if (tela === "reservas") {
     return (

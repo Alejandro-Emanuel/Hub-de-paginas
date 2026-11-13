@@ -1,18 +1,18 @@
 import { prisma } from "@/lib/prisma";
 
 export async function buscarRelatoriosUnificados() {
-  // Buscar dados das tabelas reais do banco
+  // Buscar dados das tabelas reais do banco em paralelo
   const [emprestimosDB, reservasDB, multasDB] = await Promise.all([
     prisma.emprestimo.findMany({
       include: {
-        livro: true,
+        cadastro_livro: true,
         usuario: { include: { perfil: true } },
         devolucao: true,
       },
     }),
     prisma.reserva.findMany({
       include: {
-        livro: true,
+        cadastro_livro: true,
         usuario: { include: { perfil: true } },
       },
     }),
@@ -22,7 +22,7 @@ export async function buscarRelatoriosUnificados() {
           include: {
             emprestimo: {
               include: {
-                livro: true,
+                cadastro_livro: true,
                 usuario: { include: { perfil: true } },
               },
             },
@@ -32,7 +32,7 @@ export async function buscarRelatoriosUnificados() {
     }),
   ]);
 
-  // Mapear para o formato que a interface relatorios.tsx espera
+  // Mapear empréstimos para o formato unificado
   const emprestimosFormatados = emprestimosDB.map((e) => {
     let status = "Ativo";
     if (e.devolucao) {
@@ -47,28 +47,32 @@ export async function buscarRelatoriosUnificados() {
     return {
       id: e.id,
       tipo: "emprestimos" as const,
-      descricao: (e.livro as unknown as { nome: string }).nome,
+      descricao: e.cadastro_livro.nome,
       responsavel: e.usuario.perfil.nome,
-      data: e.data_emprestimo.toISOString().split("T")[0],
+      data: new Date(e.data_emprestimo).toISOString().split("T")[0],
       status,
     };
   });
 
+  // Mapear reservas para o formato unificado
   const reservasFormatadas = reservasDB.map((r) => ({
     id: r.id,
     tipo: "reservas" as const,
-    descricao: (r.livro as unknown as { nome: string }).nome,
+    descricao: r.cadastro_livro.nome,
     responsavel: r.usuario.perfil.nome,
-    data: r.data_reserva.toISOString().split("T")[0],
+    data: new Date(r.data_reserva).toISOString().split("T")[0],
     status: r.disponivel ? "Confirmada" : "Pendente",
   }));
 
+  // Mapear multas para o formato unificado
   const multasFormatadas = multasDB.map((m) => ({
     id: m.id,
     tipo: "multas" as const,
-    descricao: (m.devolucao.emprestimo.livro as unknown as { nome: string }).nome,
+    descricao: m.devolucao.emprestimo.cadastro_livro.nome,
     responsavel: m.devolucao.emprestimo.usuario.perfil.nome,
-    data: m.devolucao.data_devolucao.toISOString().split("T")[0],
+    data: m.devolucao.data_devolucao
+      ? new Date(m.devolucao.data_devolucao).toISOString().split("T")[0]
+      : "",
     status: m.status,
   }));
 
