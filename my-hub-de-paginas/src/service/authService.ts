@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 import { prisma } from "@/lib/prisma";
 
 
-const SECRET_KEY = "sua_chave_secreta"; // chave secreta em desenvolvimento.
+export const SECRET_KEY = "sua_chave_secreta"; // chave secreta em desenvolvimento.
 
 export async function autenticarUsuario(email: string, senha: string){
   const perfil = await prisma.perfil.findUnique({where: {email}});

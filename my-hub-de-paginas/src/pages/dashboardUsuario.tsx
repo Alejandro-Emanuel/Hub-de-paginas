@@ -3,12 +3,12 @@
 import { useMemo, useState } from "react";
 
 type TelaUsuario =
-  | "emprestimos"
-  | "reservas"
+  | "historicoUsuario"
   | "multas"
   | "help"
-  | "historico"
-  | "perfil";
+  | "perfilUsuario"
+  | "reservas"
+  | "dashboardUsuario";
 
 interface DashboardUsuarioProps {
   onLogout: () => void;
@@ -101,7 +101,7 @@ export function DashboardUsuario({ onLogout, IrPara }: DashboardUsuarioProps) {
 
   return (
     <main className="min-h-screen w-full bg-[#c5cbaa] p-3 sm:p-5 flex flex-col md:flex-row gap-5">
-      <aside className="w-full md:w-[165px] md:min-h-[calc(100vh-40px)] flex flex-col justify-between gap-5 shrink-0">
+      <aside className="w-full md:w-165px md:min-h-[calc(100vh-40px)] flex flex-col justify-between gap-5 shrink-0">
         <div className="rounded-[28px] bg-[#f8f5df] px-4 py-5 shadow-sm">
           <div className="flex items-center justify-center gap-2 border-b border-[#a6ad91] pb-3">
             <span className="text-2xl text-[#333d32]">▣</span>
@@ -128,7 +128,7 @@ export function DashboardUsuario({ onLogout, IrPara }: DashboardUsuarioProps) {
             </button>
 
             <button
-              onClick={() => IrPara("emprestimos")}
+              onClick={() => IrPara("historicoUsuario")}
               className="flex items-center gap-3 text-[#5c6b57] hover:text-[#283a2d] transition"
             >
               <span className="text-xl">▣</span>
@@ -149,7 +149,7 @@ export function DashboardUsuario({ onLogout, IrPara }: DashboardUsuarioProps) {
               </span>
             </button>
 
-            <button onClick={() => IrPara("historico")}>
+            <button onClick={() => IrPara("historicoUsuario")}>
               <span className="text-xl">▤</span>
               <span className="font-serif italic font-bold text-sm">
                 Histórico
@@ -196,7 +196,7 @@ export function DashboardUsuario({ onLogout, IrPara }: DashboardUsuarioProps) {
           </div>
 
           <button
-            onClick={() => IrPara("perfil")}
+            onClick={() => IrPara("perfilUsuario")}
             aria-label="Abrir perfil"
             className="w-[72px] h-[48px] rounded-[20px] bg-[#faf8e9] flex items-center justify-center text-[#737d6b] hover:bg-white transition shadow-sm"
           >
