@@ -9,7 +9,7 @@ import telaFundo from "../assets/BackLogin.png"
 
 interface LoginProps {
   IrParaCasdastro: () => void;
-  SucessoLogin: () => void;
+  SucessoLogin: (tipo: string) => void;
 }
 
 export function Login({ IrParaCasdastro, SucessoLogin }: LoginProps) {
@@ -51,9 +51,10 @@ export function Login({ IrParaCasdastro, SucessoLogin }: LoginProps) {
       }
 
       // Executa a função de sucesso para avançar a tela
-      SucessoLogin();
-    } catch {
-      setErro("Erro ao se conectar com o servidor.");
+      SucessoLogin(data.tipo);
+    } catch (erro) {
+      console.error("Erro depois do login:", erro);
+      setErro("Erro ao se conectar com o server")
     } finally {
       setCarregando(false);
     }

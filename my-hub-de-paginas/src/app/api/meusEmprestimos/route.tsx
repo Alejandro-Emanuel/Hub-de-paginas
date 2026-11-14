@@ -10,7 +10,10 @@ export async function GET(request: Request) {
       return NextResponse.json({ mensagem: "Não autorizado" }, { status: 401 });
     }
 
-    const dados = jwt.verify(token, SECRET_KEY) as { id: number };
+    const dados = jwt.verify(token, SECRET_KEY) as { id: number; tipo: string };
+    if (dados.tipo !== "usuario") {
+      return NextResponse.json({ mensagem: "Acesso negado" }, { status: 403 });
+    }
 
     const usuario = await prisma.usuario.findUnique({
       where: { perfil_id: dados.id },

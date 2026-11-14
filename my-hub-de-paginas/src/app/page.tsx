@@ -4,97 +4,107 @@ import { useState } from "react";
 import { Login } from "@/pages/login";
 import { Cadastro } from "@/pages/cadastro";
 import { DashboardAdm } from "@/pages/dashboardAdm";
-import { CadastrarLivros } from "@/pages/CadastrarLivros";
-import { Relatorios } from "@/pages/relatorios";
-import { Reservas } from "@/pages/reservas";
-import { Help } from "@/pages/help";
-import { Multas } from "@/pages/Multas";
 import { DashboardUsuario } from "@/pages/dashboardUsuario";
-import { HistoricoUsuario } from "@/pages/historicoUsuario";
+import { CadastrarLivros } from "@/pages/CadastrarLivros";
 import { EmprestimosDevolucoes } from "@/pages/emprestimosDevolucoes";
+import { HistoricoUsuario } from "@/pages/historicoUsuario";
+import { Reservas } from "@/pages/reservas";
+import { Multas } from "@/pages/Multas";
+import { Help } from "@/pages/help";
+import { Relatorios } from "@/pages/relatorios";
 
 type Tela =
   | "login"
   | "cadastro"
   | "dashboardAdm"
-  | "cadastrarLivros"
   | "dashboardUsuario"
-  | "historicoUsuario"
+  | "cadastrarLivros"
   | "emprestimosDevolucoes"
+  | "historicoUsuario"
   | "reservas"
   | "multas"
   | "help"
-  | "relatorios"
-  | "perfilUsuario";
+  | "relatorios";
 
 export default function Home() {
   const [tela, setTela] = useState<Tela>("login");
+  const [anterior, setAnterior] = useState<Tela>("login");
 
-  if (tela === "relatorios") {
-    return <Relatorios Voltar={() => setTela("dashboardAdm")} />;
+  // Troca de tela guardando de onde o usuário veio
+  function IrPara(destino: Tela) {
+    setAnterior(tela);
+    setTela(destino);
+  }
+
+  // Volta para a tela de onde o usuário veio
+  function Voltar() {
+    setTela(anterior);
+  }
+
+  // Sai da conta e volta ao login
+  function Sair() {
+    setTela("login");
   }
 
   if (tela === "cadastro") {
-    return <Cadastro IrParaLogin={() => setTela("login")} />;
+    return <Cadastro IrParaLogin={Sair} />;
   }
 
   if (tela === "dashboardAdm") {
-    return <DashboardAdm onLogout={() => setTela("login")} IrPara={setTela} />;
+    return <DashboardAdm onLogout={Sair} IrPara={IrPara} />;
   }
 
   if (tela === "dashboardUsuario") {
-    return <DashboardUsuario onLogout={() => setTela("login")} IrPara={setTela} />;
+    return <DashboardUsuario onLogout={Sair} IrPara={IrPara} />;
   }
 
   if (tela === "cadastrarLivros") {
-    return (<CadastrarLivros 
-    Voltar={() => setTela("dashboardAdm")} 
-    Reservas={() => setTela("reservas")}
-    Ajuda={() => setTela("help")}
-    />
-    );
-  }
-
-  if (tela === "emprestimosDevolucoes") {
-  return (
-    <EmprestimosDevolucoes
-      onLogout={() => setTela("login")}
-      IrPara={setTela}
-    />
-  );
-}
-
-if (tela === "historicoUsuario") {
-  return (
-    <HistoricoUsuario
-      onLogout={() => setTela("login")}
-      IrPara={setTela}
-    />
-  );
-}
-
-  if (tela === "reservas") {
     return (
-      <Reservas
-        Voltar={() => setTela("dashboardAdm")}
-        onLogout={() => setTela("login")}
-        IrParaAjuda={() => setTela("help")}
+      <CadastrarLivros
+        Voltar={Voltar}
+        Ajuda={() => IrPara("help")}
+        Reservas={() => IrPara("reservas")}
       />
     );
   }
 
-  if (tela === "help") {
-    return <Help Voltar={() => setTela("dashboardAdm")} />;
+  if (tela === "emprestimosDevolucoes") {
+    return <EmprestimosDevolucoes onLogout={Sair} IrPara={IrPara} />;
+  }
+
+  if (tela === "historicoUsuario") {
+    return <HistoricoUsuario onLogout={Sair} IrPara={IrPara} />;
+  }
+
+  if (tela === "reservas") {
+    return (
+      <Reservas
+        Voltar={Voltar}
+        onLogout={Sair}
+        IrParaAjuda={() => IrPara("help")}
+      />
+    );
   }
 
   if (tela === "multas") {
-    return <Multas Voltar={() => setTela("dashboardAdm")} />;
+    return <Multas Voltar={Voltar} />;
   }
+
+  if (tela === "help") {
+    return <Help Voltar={Voltar} />;
+  }
+
+  if (tela === "relatorios") {
+    return <Relatorios Voltar={Voltar} />;
+  }
+
 
   return (
     <Login
-      IrParaCasdastro={() => setTela("cadastro")}
-      SucessoLogin={() => setTela("dashboardAdm")}
+      IrParaCasdastro={() => IrPara("cadastro")}
+      SucessoLogin={(tipo) =>
+        IrPara(tipo === "adm" ? "dashboardAdm" : "dashboardUsuario")
+      }
     />
   );
 }
