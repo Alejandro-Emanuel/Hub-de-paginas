@@ -11,12 +11,21 @@ import Marcador from "../assets/iconeCards/Marcador.png";
 import Multa from "../assets/iconeCards/Multa.png";
 import Clip from "../assets/iconeCards/Paperclip.png";
 import Perfil from "../assets/iconeCards/Perfil.png";
-import telaFundo from "../assets/iconeCards/telaDeFundo.png"
-import ajudaIcon from "../assets/iconeCards/interrogaçãoIcon.png"
+import telaFundo from "../assets/iconeCards/telaDeFundo.png";
+import ajudaIcon from "../assets/iconeCards/interrogaçãoIcon.png";
+import logoutIcon from "../assets/iconeCards/Log out.png";
+
+type TelaAdmin =
+  | "cadastrarLivros"
+  | "emprestimosDevolucoes"
+  | "reservas"
+  | "multas"
+  | "relatorios"
+  | "help";
 
 interface DashboardAdmProps {
   onLogout: () => void;
-  IrPara: (tela: "cadastrarLivros" | "emprestimos" | "reservas" | "multas" | "relatorios" | "help") => void;
+  IrPara: (tela: TelaAdmin) => void;
 }
 
 export function DashboardAdm({ onLogout, IrPara }: DashboardAdmProps) {
@@ -48,8 +57,9 @@ export function DashboardAdm({ onLogout, IrPara }: DashboardAdmProps) {
   };
 
   return (
-    <div className="min-h-screen bg-[#C5CBB0] flex gap-6 p-6"
-    style={{ backgroundImage: `url(${telaFundo.src})` }}
+    <div
+      className="min-h-screen bg-[#C5CBB0] flex gap-6 p-6"
+      style={{ backgroundImage: `url(${telaFundo.src})` }}
     >
       <BarraLateral.Root>
         <Image
@@ -60,18 +70,19 @@ export function DashboardAdm({ onLogout, IrPara }: DashboardAdmProps) {
         <hr />
 
         <BarraLateral.Item onClick={() => IrPara("help")}>
-          <Image src={ajudaIcon} alt="Ajuda" className="w-6 h-6" />
+          <Image src={ajudaIcon} alt="" className="w-6 h-6" />
           Ajuda
         </BarraLateral.Item>
 
-        <BarraLateral.Item>
-          <Image src={Marcador} alt="Histórico" className="w-6 h-6" />
+        
+        <BarraLateral.Item onClick={() => IrPara("relatorios")}>
+          <Image src={Marcador} alt="" className="w-6 h-6" />
           Histórico
         </BarraLateral.Item>
 
         <div className="mt-auto">
           <BarraLateral.Item onClick={handleLogout}>
-            <span className="w-6 h-6" aria-hidden="true" />
+            <Image src={logoutIcon} alt="" className="w-6 h-6" />
             Log out
           </BarraLateral.Item>
         </div>
@@ -90,7 +101,8 @@ export function DashboardAdm({ onLogout, IrPara }: DashboardAdmProps) {
             <CardIcone.Texto>Cadastrar</CardIcone.Texto>
           </CardIcone.Root>
 
-          <CardIcone.Root onClick={() => IrPara("emprestimos")}>
+          
+          <CardIcone.Root onClick={() => IrPara("emprestimosDevolucoes")}>
             <Image
               src={Dollar}
               alt="Ícone de empréstimos"

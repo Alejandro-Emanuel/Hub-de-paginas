@@ -10,6 +10,7 @@ import { EmprestimosDevolucoes } from "@/pages/emprestimosDevolucoes";
 import { HistoricoUsuario } from "@/pages/historicoUsuario";
 import { Reservas } from "@/pages/reservas";
 import { Multas } from "@/pages/Multas";
+import { MultasUsuario } from "@/pages/multasUsuario";
 import { Help } from "@/pages/help";
 import { Relatorios } from "@/pages/relatorios";
 
@@ -23,26 +24,30 @@ type Tela =
   | "historicoUsuario"
   | "reservas"
   | "multas"
+  | "multasUsuario"
   | "help"
   | "relatorios";
 
 export default function Home() {
   const [tela, setTela] = useState<Tela>("login");
-  const [anterior, setAnterior] = useState<Tela>("login");
+  const [historico, setHistorico] = useState<Tela[]>([]);
 
-  // Troca de tela guardando de onde o usuário veio
+  
   function IrPara(destino: Tela) {
-    setAnterior(tela);
+    setHistorico([...historico, tela]);
     setTela(destino);
   }
 
-  // Volta para a tela de onde o usuário veio
+  
   function Voltar() {
-    setTela(anterior);
-  }
+    setTela(historico[historico.length - 1] ?? "login");
+    setHistorico(historico.slice(0, -1));
+  }w
 
-  // Sai da conta e volta ao login
+  // Sai da conta, apaga o token e volta ao login
   function Sair() {
+    localStorage.removeItem("token");
+    setHistorico([]);
     setTela("login");
   }
 
@@ -90,6 +95,10 @@ export default function Home() {
     return <Multas Voltar={Voltar} />;
   }
 
+  if (tela === "multasUsuario") {
+    return <MultasUsuario onLogout={Sair} IrPara={IrPara} />;
+  }
+
   if (tela === "help") {
     return <Help Voltar={Voltar} />;
   }
@@ -97,7 +106,6 @@ export default function Home() {
   if (tela === "relatorios") {
     return <Relatorios Voltar={Voltar} />;
   }
-
 
   return (
     <Login
