@@ -14,18 +14,11 @@ import Perfil from "../assets/iconeCards/Perfil.png";
 import telaFundo from "../assets/iconeCards/telaDeFundo.png";
 import ajudaIcon from "../assets/iconeCards/interrogaçãoIcon.png";
 import logoutIcon from "../assets/iconeCards/Log out.png";
-
-type TelaAdmin =
-  | "cadastrarLivros"
-  | "emprestimosDevolucoes"
-  | "reservas"
-  | "multas"
-  | "relatorios"
-  | "help";
+import { Tela } from "@/lib/telas";
 
 interface DashboardAdmProps {
   onLogout: () => void;
-  IrPara: (tela: TelaAdmin) => void;
+  IrPara: (tela: Tela) => void;
 }
 
 export function DashboardAdm({ onLogout, IrPara }: DashboardAdmProps) {

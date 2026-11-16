@@ -1,19 +1,11 @@
-
 "use client";
 
 import { useState } from "react";
-
-type TelaAdmin =
-  | "dashboardAdm"
-  | "livros"
-  | "relatorio"
-  | "multas"
-  | "historico"
-  | "perfil";
+import { Tela } from "@/lib/telas";
 
 interface EmprestimosDevolucoesProps {
   onLogout: () => void;
-  IrPara: (tela: TelaAdmin) => void;
+  IrPara: (tela: Tela) => void;
 }
 
 interface Usuario {
@@ -89,7 +81,7 @@ export function EmprestimosDevolucoes({
       <aside className="w-full md:w-[65px] md:min-h-[calc(100vh-40px)] flex flex-col justify-between shrink-0">
         <div className="rounded-[28px] bg-[#f8f5df] px-2 py-3 shadow-sm">
 
-          <button onClick={() => IrPara("perfil")} title="Perfil" className="w-full flex justify-center mb-5">
+          <button onClick={() => IrPara("dashboardAdm")} title="Perfil" className="w-full flex justify-center mb-5">
             <svg viewBox="0 0 40 40" className="w-9 h-9" fill="none">
               <circle cx="20" cy="20" r="17" fill="#78836f" />
               <circle cx="20" cy="14" r="6" fill="#f8f5df" />
@@ -101,13 +93,13 @@ export function EmprestimosDevolucoes({
 
           <nav className="flex flex-row md:flex-col items-center justify-around md:gap-7">
             {[
-              ["dashboardAdm", "ⓘ", "Ajuda"],
-              ["livros", "▤", "Livros"],
-              ["historico", "♧", "Histórico"],
+              ["help", "ⓘ", "Ajuda"],
+              ["cadastrarLivros", "▤", "Livros"],
+              ["relatorios", "♧", "Relatórios"],
             ].map(([tela, icone, titulo]) => (
               <button
                 key={tela}
-                onClick={() => IrPara(tela as TelaAdmin)}
+                onClick={() => IrPara(tela as Tela)}
                 title={titulo}
                 className="text-[#64735d] text-2xl hover:text-[#283a2d] transition"
               >

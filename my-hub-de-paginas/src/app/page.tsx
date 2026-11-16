@@ -1,18 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { Login } from "@/pages/login";
-import { Cadastro } from "@/pages/cadastro";
-import { DashboardAdm } from "@/pages/dashboardAdm";
-import { DashboardUsuario } from "@/pages/dashboardUsuario";
-import { CadastrarLivros } from "@/pages/CadastrarLivros";
-import { EmprestimosDevolucoes } from "@/pages/emprestimosDevolucoes";
-import { HistoricoUsuario } from "@/pages/historicoUsuario";
-import { Reservas } from "@/pages/reservas";
-import { Multas } from "@/pages/Multas";
-import { MultasUsuario } from "@/pages/MultasUsuario";
-import { Help } from "@/pages/help";
-import { Relatorios } from "@/pages/relatorios";
+import { Login } from "@/telas/login";
+import { Cadastro } from "@/telas/cadastro";
+import { DashboardAdm } from "@/telas/dashboardAdm";
+import { DashboardUsuario } from "@/telas/dashboardUsuario";
+import { CadastrarLivros } from "@/telas/CadastrarLivros";
+import { EmprestimosDevolucoes } from "@/telas/emprestimosDevolucoes";
+import { HistoricoUsuario } from "@/telas/historicoUsuario";
+import { Reservas } from "@/telas/reservas";
+import { Multas } from "@/telas/Multas";
+import { MultasUsuario } from "@/telas/MultasUsuario";
+import { Help } from "@/telas/help";
+import { Relatorios } from "@/telas/relatorios";
 
 type Tela =
   | "login"

@@ -7,7 +7,7 @@ export async function buscarMultas() {
         include: {
           emprestimo: {
             include: {
-              livro: true,
+              cadastro_livro: true,
               usuario: {
                 include: {
                   perfil: true,
@@ -27,7 +27,7 @@ export async function buscarMultas() {
       id: m.id,
       usuario: perfil.nome,
       email: perfil.email,
-      livro: (emprestimo.livro as unknown as { nome: string }).nome,
+      livro: (emprestimo.cadastro_livro as unknown as { nome: string }).nome,
       motivo:
         m.dias_atraso > 0
           ? `Atraso na devolução (${m.dias_atraso} dias)`

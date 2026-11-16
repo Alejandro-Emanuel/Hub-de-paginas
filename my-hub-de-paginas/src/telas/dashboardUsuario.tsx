@@ -143,7 +143,7 @@ export function DashboardUsuario({ onLogout, IrPara }: DashboardUsuarioProps) {
         />
         <hr />
 
-        <BarraLateral.Item ativo>
+        <BarraLateral.Item >
           <Image src={casinhaIcon} alt="" className="w-6 h-6" />
           Início
         </BarraLateral.Item>

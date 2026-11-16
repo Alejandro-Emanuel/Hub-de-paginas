@@ -147,7 +147,7 @@ export function HistoricoUsuario({ onLogout, IrPara }: HistoricoUsuarioProps) {
           Multas
         </BarraLateral.Item>
 
-        <BarraLateral.Item ativo>
+        <BarraLateral.Item >
           <Image src={marcador} alt="" className="w-6 h-6" />
           Histórico
         </BarraLateral.Item>

@@ -139,7 +139,7 @@ export function MultasUsuario({ onLogout, IrPara }: MultasUsuarioProps) {
           Reservas
         </BarraLateral.Item>
 
-        <BarraLateral.Item ativo>
+        <BarraLateral.Item >
           <Image src={multaIcon} alt="" className="w-6 h-6" />
           Multas
         </BarraLateral.Item>

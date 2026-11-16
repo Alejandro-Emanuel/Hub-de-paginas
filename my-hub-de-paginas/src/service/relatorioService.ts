@@ -5,14 +5,14 @@ export async function buscarRelatoriosUnificados() {
   const [emprestimosDB, reservasDB, multasDB] = await Promise.all([
     prisma.emprestimo.findMany({
       include: {
-        livro: true,
+        cadastro_livro: true,
         usuario: { include: { perfil: true } },
         devolucao: true,
       },
     }),
     prisma.reserva.findMany({
       include: {
-        livro: true,
+        cadastro_livro: true,
         usuario: { include: { perfil: true } },
       },
     }),
@@ -22,7 +22,7 @@ export async function buscarRelatoriosUnificados() {
           include: {
             emprestimo: {
               include: {
-                livro: true,
+                cadastro_livro: true,
                 usuario: { include: { perfil: true } },
               },
             },
@@ -47,7 +47,7 @@ export async function buscarRelatoriosUnificados() {
     return {
       id: e.id,
       tipo: "emprestimos" as const,
-      descricao: (e.livro as unknown as { nome: string }).nome,
+      descricao: (e.cadastro_livro as unknown as { nome: string }).nome,
       responsavel: e.usuario.perfil.nome,
       data: e.data_emprestimo.toISOString().split("T")[0],
       status,
@@ -57,7 +57,7 @@ export async function buscarRelatoriosUnificados() {
   const reservasFormatadas = reservasDB.map((r) => ({
     id: r.id,
     tipo: "reservas" as const,
-    descricao: (r.livro as unknown as { nome: string }).nome,
+    descricao: (r.cadastro_livro as unknown as { nome: string }).nome,
     responsavel: r.usuario.perfil.nome,
     data: r.data_reserva.toISOString().split("T")[0],
     status: r.disponivel ? "Confirmada" : "Pendente",
@@ -66,7 +66,7 @@ export async function buscarRelatoriosUnificados() {
   const multasFormatadas = multasDB.map((m) => ({
     id: m.id,
     tipo: "multas" as const,
-    descricao: (m.devolucao.emprestimo.livro as unknown as { nome: string }).nome,
+    descricao: (m.devolucao.emprestimo.cadastro_livro as unknown as { nome: string }).nome,
     responsavel: m.devolucao.emprestimo.usuario.perfil.nome,
     data: m.devolucao.data_devolucao.toISOString().split("T")[0],
     status: m.status,
