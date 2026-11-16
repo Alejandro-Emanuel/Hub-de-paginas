@@ -10,7 +10,7 @@ import { EmprestimosDevolucoes } from "@/pages/emprestimosDevolucoes";
 import { HistoricoUsuario } from "@/pages/historicoUsuario";
 import { Reservas } from "@/pages/reservas";
 import { Multas } from "@/pages/Multas";
-import { MultasUsuario } from "@/pages/multasUsuario";
+import { MultasUsuario } from "@/pages/MultasUsuario";
 import { Help } from "@/pages/help";
 import { Relatorios } from "@/pages/relatorios";
 
@@ -42,7 +42,7 @@ export default function Home() {
   function Voltar() {
     setTela(historico[historico.length - 1] ?? "login");
     setHistorico(historico.slice(0, -1));
-  }w
+  }
 
   // Sai da conta, apaga o token e volta ao login
   function Sair() {

@@ -2,7 +2,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { prisma } from "@/lib/prisma";
 
-export const SECRET_KEY = "sua_chave_secreta"; // chave secreta em desenvolvimento.
+export const SECRET_KEY = process.env.JWT_SECRET ?? ""; // chave secreta em desenvolvimento.
 
 function gerarRespostaLogin(
   tipo: "adm" | "usuario",
