@@ -18,9 +18,12 @@ export async function POST(request: Request) {
     const resultado = await cadastrarUsuario(nome, email, senha);
 
     return NextResponse.json(resultado, { status: 201 });
-  } catch (erro: any) {
+  } catch (erro: unknown) {
+    const mensagem =
+      erro instanceof Error ? erro.message : "Erro interno ao cadastrar usuário";
+
     return NextResponse.json(
-      { mensagem: erro.message || "Erro interno ao cadastrar usuário" },
+      { mensagem },
       { status: 500 },
     );
   }
