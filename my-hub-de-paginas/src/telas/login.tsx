@@ -9,10 +9,11 @@ import telaFundo from "../assets/BackLogin.png"
 
 interface LoginProps {
   IrParaCasdastro: () => void;
+  IrParaCadastroAdm?: () => void;
   SucessoLogin: (tipo: string) => void;
 }
 
-export function Login({ IrParaCasdastro, SucessoLogin }: LoginProps) {
+export function Login({ IrParaCasdastro, IrParaCadastroAdm, SucessoLogin }: LoginProps) {
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [erro, setErro] = useState("");
@@ -150,6 +151,15 @@ export function Login({ IrParaCasdastro, SucessoLogin }: LoginProps) {
               Cadastre-se
             </button>
           </p>
+          {IrParaCadastroAdm && (
+            <button
+              type="button"
+              onClick={IrParaCadastroAdm}
+              className="mt-2 text-[10px] text-[#5A6455] hover:underline"
+            >
+              Sou administrador
+            </button>
+          )}
         </div>
       </div>
     </div>

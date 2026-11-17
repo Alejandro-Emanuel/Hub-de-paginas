@@ -13,6 +13,7 @@ import { Multas } from "@/telas/Multas";
 import { MultasUsuario } from "@/telas/MultasUsuario";
 import { Help } from "@/telas/help";
 import { Relatorios } from "@/telas/relatorios";
+import { CadastroAdm } from "@/pages/cadastroAdm";
 
 type Tela =
   | "login"
@@ -26,7 +27,8 @@ type Tela =
   | "multas"
   | "multasUsuario"
   | "help"
-  | "relatorios";
+  | "relatorios"
+  | "cadastroAdm";
 
 export default function Home() {
   const [tela, setTela] = useState<Tela>("login");
@@ -53,6 +55,17 @@ export default function Home() {
 
   if (tela === "cadastro") {
     return <Cadastro IrParaLogin={Sair} />;
+  }
+  
+    if (tela === "cadastroAdm") {
+    return (
+      <CadastroAdm
+        IrParaLogin={Sair}
+        SucessoLogin={(tipo) =>
+          IrPara(tipo === "adm" ? "dashboardAdm" : "dashboardUsuario")
+        }
+      />
+    );
   }
 
   if (tela === "dashboardAdm") {
@@ -107,9 +120,10 @@ export default function Home() {
     return <Relatorios Voltar={Voltar} />;
   }
 
-  return (
+    return (
     <Login
       IrParaCasdastro={() => IrPara("cadastro")}
+      IrParaCadastroAdm={() => IrPara("cadastroAdm")}
       SucessoLogin={(tipo) =>
         IrPara(tipo === "adm" ? "dashboardAdm" : "dashboardUsuario")
       }
