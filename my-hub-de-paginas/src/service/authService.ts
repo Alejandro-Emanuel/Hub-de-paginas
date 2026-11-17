@@ -23,11 +23,13 @@ function gerarRespostaLogin(
 }
 
 export async function autenticarUsuario(email: string, senha: string) {
+  // 1. Tenta autenticar como Administrador (tabela Gestao)
   const adm = await prisma.gestao.findUnique({ where: { email } });
   if (adm && (await bcrypt.compare(senha, adm.senha))) {
     return gerarRespostaLogin("adm", adm.id, adm.nome, adm.email);
   }
 
+  // 2. Tenta autenticar como Usuário Comum (tabela Perfil)
   const perfil = await prisma.perfil.findUnique({ where: { email } });
   if (perfil && (await bcrypt.compare(senha, perfil.senha))) {
     return gerarRespostaLogin("usuario", perfil.id, perfil.nome, perfil.email);
@@ -36,7 +38,7 @@ export async function autenticarUsuario(email: string, senha: string) {
   throw new Error("e-mail ou senha incorretos");
 }
 
-// função para cadastrar um novo usuário :)
+// Função para cadastrar um novo usuário comum :)
 export async function cadastrarUsuario(
   nome: string,
   email: string,
@@ -60,4 +62,29 @@ export async function cadastrarUsuario(
   });
 
   return { mensagem: "Usuário cadastrado com sucesso!", usuario: perfil };
+}
+
+// Função para cadastrar um Administrador
+export async function cadastrarAdm(
+  nome: string,
+  email: string,
+  senha: string,
+) {
+  const existente = await prisma.gestao.findUnique({ where: { email } });
+  if (existente) {
+    throw new Error("Este e-mail de gestor já está cadastrado.");
+  }
+
+  const senhaHash = await bcrypt.hash(senha, 10);
+
+  const adm = await prisma.gestao.create({
+    data: {
+      nome,
+      email,
+      senha: senhaHash,
+    },
+    select: { id: true, nome: true, email: true },
+  });
+
+  return { mensagem: "Administrador cadastrado com sucesso!", adm };
 }
