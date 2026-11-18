@@ -33,7 +33,7 @@ export default function Home() {
     setHistorico(historico.slice(0, -1));
   }
 
-  // Sai da conta, apaga o token e volta ao login
+  // Sai da aplicação, removendo o token e limpando o histórico
   function Sair() {
     localStorage.removeItem("token");
     setHistorico([]);

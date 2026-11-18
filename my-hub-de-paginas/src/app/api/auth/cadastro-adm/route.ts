@@ -4,7 +4,7 @@ import { cadastrarAdm } from "@/service/authService";
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { nome, email, senha } = body;
+    const { nome, email, senha, chaveAcesso } = body;
 
     if (!nome || !email || !senha) {
       return NextResponse.json(
@@ -13,7 +13,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const resultado = await cadastrarAdm(nome, email, senha);
+    const resultado = await cadastrarAdm(nome, email, senha, chaveAcesso);
 
     return NextResponse.json(resultado, { status: 201 });
   } catch (erro: unknown) {
@@ -24,7 +24,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json(
       { mensagem },
-      { status: 500 }
+      { status: 400 }
     );
   }
 }

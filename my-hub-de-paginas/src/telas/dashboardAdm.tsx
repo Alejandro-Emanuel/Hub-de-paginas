@@ -38,7 +38,7 @@ export function DashboardAdm({ onLogout, IrPara }: DashboardAdmProps) {
           setMetricas(data);
         }
       } catch (err) {
-        console.error("Erro ao carregar métricas:", err);
+        console.error("Erro ao carregar métricas :", err);
       }
     }
     carregarDashboard();

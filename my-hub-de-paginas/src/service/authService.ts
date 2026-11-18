@@ -1,3 +1,4 @@
+// src/service/authService.ts
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { prisma } from "@/lib/prisma";
@@ -64,12 +65,19 @@ export async function cadastrarUsuario(
   return { mensagem: "Usuário cadastrado com sucesso!", usuario: perfil };
 }
 
-// Função para cadastrar um Administrador
+// Função para cadastrar um Administrador (com validação opcional de chave de acesso)
 export async function cadastrarAdm(
   nome: string,
   email: string,
   senha: string,
+  chaveAcesso?: string,
 ) {
+  // Valida o código de acesso se houver uma chave mestra configurada no .env
+  const chaveMestra = process.env.ADMIN_SECRET_KEY;
+  if (chaveMestra && chaveAcesso !== chaveMestra) {
+    throw new Error("Código de acesso de administrador inválido.");
+  }
+
   const existente = await prisma.gestao.findUnique({ where: { email } });
   if (existente) {
     throw new Error("Este e-mail de gestor já está cadastrado.");
