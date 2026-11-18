@@ -1,6 +1,7 @@
 export type Tela =
   | "login"
   | "cadastro"
+  | "cadastroAdm"
   | "dashboardAdm"
   | "dashboardUsuario"
   | "cadastrarLivros"
