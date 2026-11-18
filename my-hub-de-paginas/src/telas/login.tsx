@@ -152,14 +152,14 @@ export function Login({ IrParaCasdastro, IrParaCadastroAdm, SucessoLogin }: Logi
             </button>
           </p>
           {IrParaCadastroAdm && (
-            <button
-              type="button"
-              onClick={IrParaCadastroAdm}
-              className="mt-2 text-[10px] text-[#5A6455] hover:underline"
-            >
-              Sou administrador
-            </button>
-          )}
+  <button
+    type="button"
+    onClick={IrParaCadastroAdm}
+    className="mt-2 text-[10px] text-[#E08328] font-bold hover:underline"
+  >
+    Sou administrador
+  </button>
+)}
         </div>
       </div>
     </div>
