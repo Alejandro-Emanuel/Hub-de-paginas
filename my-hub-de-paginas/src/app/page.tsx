@@ -13,7 +13,7 @@ import { Multas } from "@/telas/Multas";
 import { MultasUsuario } from "@/telas/MultasUsuario";
 import { Help } from "@/telas/help";
 import { Relatorios } from "@/telas/relatorios";
-import { CadastroAdm } from "@/pages/cadastroAdm";
+import { CadastroAdm } from "@/telas/CadastroAdm";
 
 type Tela =
   | "login"
