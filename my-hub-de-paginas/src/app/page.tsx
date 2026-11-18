@@ -96,9 +96,10 @@ export default function Home() {
     return <Relatorios Voltar={Voltar} />;
   }
 
-  return (
+    return (
     <Login
       IrParaCasdastro={() => IrPara("cadastro")}
+      IrParaCadastroAdm={() => IrPara("cadastroAdm")}
       SucessoLogin={(tipo) =>
         IrPara(tipo === "adm" ? "dashboardAdm" : "dashboardUsuario")
       }
