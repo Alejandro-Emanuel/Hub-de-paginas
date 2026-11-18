@@ -13,20 +13,9 @@ import { Multas } from "@/telas/Multas";
 import { MultasUsuario } from "@/telas/MultasUsuario";
 import { Help } from "@/telas/help";
 import { Relatorios } from "@/telas/relatorios";
+import { Tela } from "@/lib/telas";
 
-type Tela =
-  | "login"
-  | "cadastro"
-  | "dashboardAdm"
-  | "dashboardUsuario"
-  | "cadastrarLivros"
-  | "emprestimosDevolucoes"
-  | "historicoUsuario"
-  | "reservas"
-  | "multas"
-  | "multasUsuario"
-  | "help"
-  | "relatorios";
+
 
 export default function Home() {
   const [tela, setTela] = useState<Tela>("login");

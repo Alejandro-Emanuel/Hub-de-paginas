@@ -8,5 +8,6 @@ export type Tela =
   | "historicoUsuario"
   | "reservas"
   | "multas"
+  | "multasUsuario"
   | "help"
   | "relatorios";
