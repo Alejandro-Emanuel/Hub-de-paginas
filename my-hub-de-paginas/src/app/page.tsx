@@ -1,4 +1,4 @@
-"use client";
+"use client"; 1
 
 import { useState } from "react";
 import { Login } from "@/telas/login";
