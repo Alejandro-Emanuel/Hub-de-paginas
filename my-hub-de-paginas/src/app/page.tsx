@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Login } from "@/telas/login";
 import { Cadastro } from "@/telas/cadastro";
+import { CadastroAdm } from "@/telas/CadastroAdm";
 import { DashboardAdm } from "@/telas/dashboardAdm";
 import { DashboardUsuario } from "@/telas/dashboardUsuario";
 import { CadastrarLivros } from "@/telas/CadastrarLivros";
@@ -42,6 +43,17 @@ export default function Home() {
 
   if (tela === "cadastro") {
     return <Cadastro IrParaLogin={Sair} />;
+  }
+
+    if (tela === "cadastroAdm") {
+    return (
+      <CadastroAdm
+        IrParaLogin={Sair}
+        SucessoLogin={(tipo) =>
+          IrPara(tipo === "adm" ? "dashboardAdm" : "dashboardUsuario")
+        }
+      />
+    );
   }
 
   if (tela === "dashboardAdm") {
