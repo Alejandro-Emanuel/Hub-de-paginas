@@ -28,6 +28,13 @@ interface LivroExterno {
   capa: string | null;
 }
 
+interface EmprestimoAtivo {
+  id: number;
+  data_prevista_devolucao: string;
+  cadastro_livro: { nome: string };
+  devolucao: object | null;
+}
+
 interface ReservasProps {
   Voltar: () => void;
   onLogout: () => void;
@@ -40,15 +47,15 @@ export function Reservas({ Voltar, onLogout, IrParaAjuda }: ReservasProps) {
   const [livros, setLivros] = useState<Livro[]>([]);
   const [externos, setExternos] = useState<LivroExterno[]>([]);
   const [erro, setErro] = useState("");
+  const [emprestimos, setEmprestimos] = useState<EmprestimoAtivo[]>([]);
+  const [mensagem, setMensagem] = useState("");
 
-  // Roda quando o painel de busca está aberto e sempre que o texto muda
   useEffect(() => {
     if (painel !== "buscar") return;
 
     let cancelado = false;
 
     const timer = setTimeout(async () => {
-      // 1) Livros da sua biblioteca (banco)
       try {
         const res = await fetch(
           `/api/livros?busca=${encodeURIComponent(busca)}`,
@@ -63,7 +70,6 @@ export function Reservas({ Voltar, onLogout, IrParaAjuda }: ReservasProps) {
         if (!cancelado) setErro("Não foi possível carregar os livros.");
       }
 
-      // 2) Livros externos (Open Library). Se falhar, a lista fica vazia.
       try {
         const resExt = await fetch(
           `/api/livros/externo?busca=${encodeURIComponent(busca)}`,
@@ -80,6 +86,38 @@ export function Reservas({ Voltar, onLogout, IrParaAjuda }: ReservasProps) {
       clearTimeout(timer);
     };
   }, [painel, busca]);
+
+  async function carregarEmprestimos() {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch("/api/meusEmprestimos", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error();
+      const dados: EmprestimoAtivo[] = await res.json();
+  
+      setEmprestimos(dados.filter((e) => !e.devolucao));
+    } catch {
+      setMensagem("Não foi possível carregar seus empréstimos.");
+    }
+  }
+
+
+  async function renovar(id: number) {
+    setMensagem("");
+    const token = localStorage.getItem("token");
+    const res = await fetch("/api/emprestimo", {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ emprestimoId: id }),
+    });
+    const dados = await res.json();
+    setMensagem(dados.mensagem);
+    if (res.ok) carregarEmprestimos();
+  }
 
   function handleLogout() {
     localStorage.removeItem("token");
@@ -116,7 +154,7 @@ export function Reservas({ Voltar, onLogout, IrParaAjuda }: ReservasProps) {
         <Titulo>Reservas</Titulo>
 
         <div className="flex flex-1 gap-8">
-          {/* Coluna dos dois botões */}
+
           <div className="flex flex-col justify-around">
             <CardIcone.Root onClick={() => setPainel("buscar")}>
               <Image
@@ -127,7 +165,13 @@ export function Reservas({ Voltar, onLogout, IrParaAjuda }: ReservasProps) {
               <CardIcone.Texto>Buscar livros</CardIcone.Texto>
             </CardIcone.Root>
 
-            <CardIcone.Root onClick={() => setPainel("renovacao")}>
+            <CardIcone.Root
+              onClick={() => {
+                setPainel("renovacao");
+                setMensagem("");
+                carregarEmprestimos();
+              }}
+            >
               <Image
                 src={renovacaoIcone}
                 alt="Renovação"
@@ -137,7 +181,6 @@ export function Reservas({ Voltar, onLogout, IrParaAjuda }: ReservasProps) {
             </CardIcone.Root>
           </div>
 
-          {/* Painel da direita */}
           <section className="flex-1 bg-[#FFF8E1] text-[#4A5546] rounded-4xl shadow-lg p-6 min-h-96 max-h-[75vh] overflow-y-auto flex flex-col gap-4">
             {painel === null && (
               <p className="m-auto text-center font-serif italic">
@@ -213,9 +256,43 @@ export function Reservas({ Voltar, onLogout, IrParaAjuda }: ReservasProps) {
             )}
 
             {painel === "renovacao" && (
-              <p className="m-auto text-center font-serif italic">
-                Em breve: aqui aparecerão os seus empréstimos para renovar.
-              </p>
+              <>
+                {mensagem && <p className="text-sm">{mensagem}</p>}
+
+                {emprestimos.length === 0 && (
+                  <p className="m-auto text-center font-serif italic">
+                    Você não tem empréstimos para renovar.
+                  </p>
+                )}
+
+                <ul className="flex flex-col gap-3">
+                  {emprestimos.map((e) => (
+                    <li
+                      key={e.id}
+                      className="flex items-center justify-between rounded-2xl bg-white/60 px-5 py-3"
+                    >
+                      <div>
+                        <p className="font-serif italic font-bold">
+                          {e.cadastro_livro.nome}
+                        </p>
+                        <p className="text-sm">
+                          Devolver até{" "}
+                          {new Date(e.data_prevista_devolucao).toLocaleDateString(
+                            "pt-BR",
+                            { timeZone: "UTC" },
+                          )}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => renovar(e.id)}
+                        className="rounded-full bg-[#4A5546] px-4 py-2 text-sm text-white"
+                      >
+                        Renovar +7 dias
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </>
             )}
           </section>
         </div>

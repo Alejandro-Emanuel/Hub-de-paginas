@@ -1,5 +1,8 @@
 import { prisma } from "@/lib/prisma";
 
+const MAX_RENOVACOES = 3;
+const DIAS_RENOVACAO = 7;
+
 export interface RenovarEmprestimoInput {
   emprestimoId: number;
 }
@@ -19,28 +22,48 @@ export async function listarEmprestimosAtivos(usuarioId: number) {
   }
 }
 
-export async function renovarEmprestimo({ emprestimoId }: RenovarEmprestimoInput) {
-  const emprestimoAtual = await prisma.emprestimo.findUnique({
+export async function renovarEmprestimo(
+  perfilId: number,
+  emprestimoId: number,
+) {
+  const usuario = await prisma.usuario.findUnique({
+    where: { perfil_id: perfilId },
+  });
+  if (!usuario) throw new Error("Usuário não encontrado.");
+
+  const emprestimo = await prisma.emprestimo.findUnique({
     where: { id: emprestimoId },
+    include: { devolucao: true, renovacao: true },
   });
 
-  if (!emprestimoAtual) {
+  if (!emprestimo || emprestimo.usuario_id !== usuario.id) {
     throw new Error("Empréstimo não encontrado.");
   }
+  if (emprestimo.devolucao) {
+    throw new Error("Este livro já foi devolvido.");
+  }
+  if (emprestimo.renovacao.length >= MAX_RENOVACOES) {
+    throw new Error(`Limite de ${MAX_RENOVACOES} renovações atingido.`);
+  }
 
-  const dataBase = new Date(emprestimoAtual.data_prevista_devolucao || new Date());
-  dataBase.setDate(dataBase.getDate() + 7);
+  const hoje = new Date();
+  hoje.setUTCHours(0, 0, 0, 0);
+  if (emprestimo.data_prevista_devolucao < hoje) {
+    throw new Error("Empréstimo em atraso não pode ser renovado.");
+  }
 
-  // Atualiza no banco de dados
-  const emprestimoAtualizado = await prisma.emprestimo.update({
-    where: { id: emprestimoId },
-    data: {
-      data_prevista_devolucao: dataBase,
-    },
-  });
+  const novaData = new Date(emprestimo.data_prevista_devolucao);
+  novaData.setUTCDate(novaData.getUTCDate() + DIAS_RENOVACAO);
 
-  return {
-    mensagem: "Empréstimo renovado com sucesso!",
-    emprestimo: emprestimoAtualizado,
-  };
+  await prisma.$transaction([
+    prisma.renovacao.create({
+      data: { emprestimo_id: emprestimoId, nova_data_devolucao: novaData },
+    }),
+    prisma.emprestimo.update({
+      where: { id: emprestimoId },
+      data: { data_prevista_devolucao: novaData },
+    }),
+  ]);
+
+  return { mensagem: "Empréstimo renovado com sucesso!" };
 }
