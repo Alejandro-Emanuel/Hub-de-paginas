@@ -87,18 +87,10 @@ export function CadastrarLivros({ Voltar, Ajuda, Reservas }: CadastrarLivrosProp
         </BarraLateral.Item>
 
         <BarraLateral.Item onClick={Reservas}>
-          <Image src={marcador} alt="Ajuda" className="w-6 h-6" />
+          <Image src={marcador} alt="" className="w-6 h-6" />
           Reservas
         </BarraLateral.Item>
 
-        <BarraLateral.Item>
-          <Image
-            src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'/%3E"
-            alt=""
-            width={24}
-            height={24}
-          />
-        </BarraLateral.Item>
         <div className="mt-auto">
           <BarraLateral.Item onClick={Voltar}>
             <span className="w-6 h-6" aria-hidden="true" />

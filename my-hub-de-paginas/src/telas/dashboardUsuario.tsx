@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import { chamarApi } from "@/lib/api";
 import { BarraLateral } from "../components/BarraLateral";
 import { Titulo } from "../components/Titulo";
 import telaFundo from "../assets/iconeCards/telaDeFundo.png";
@@ -32,6 +33,7 @@ interface Livro {
   categoria: string;
   editora: string;
   ano: number;
+  disponivel?: boolean; // se a API ainda não manda, o botão Reservar fica liberado
 }
 
 interface DashboardUsuarioData {
@@ -48,6 +50,11 @@ export function DashboardUsuario({ onLogout, IrPara }: DashboardUsuarioProps) {
   const [categoriaAtiva, setCategoriaAtiva] = useState("Todos");
   const [mostrarTodos, setMostrarTodos] = useState(false);
   const [livroSelecionado, setLivroSelecionado] = useState<Livro | null>(null);
+  const [reservando, setReservando] = useState(false);
+  const [avisoReserva, setAvisoReserva] = useState<{
+    tipo: "ok" | "erro";
+    texto: string;
+  } | null>(null);
 
   useEffect(() => {
     let cancelado = false;
@@ -123,6 +130,34 @@ export function DashboardUsuario({ onLogout, IrPara }: DashboardUsuarioProps) {
   }, [pesquisa, categoriaAtiva]);
 
   const livrosExibidos = mostrarTodos ? livros : livros.slice(0, 6);
+
+  async function reservarLivroSelecionado() {
+    if (!livroSelecionado) return;
+
+    setReservando(true);
+    setAvisoReserva(null);
+
+    try {
+      await chamarApi("/api/reservas", {
+        method: "POST",
+        body: JSON.stringify({ livroId: livroSelecionado.id }),
+      });
+      setAvisoReserva({
+        tipo: "ok",
+        texto: "Reserva feita! Acompanhe em Reservas > Minhas reservas.",
+      });
+    } catch (erro) {
+      setAvisoReserva({
+        tipo: "erro",
+        texto:
+          erro instanceof Error
+            ? erro.message
+            : "Não foi possível reservar este livro.",
+      });
+    } finally {
+      setReservando(false);
+    }
+  }
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -230,10 +265,13 @@ export function DashboardUsuario({ onLogout, IrPara }: DashboardUsuarioProps) {
                 <li key={livro.id}>
                   <button
                     type="button"
-                    onClick={() => setLivroSelecionado(livro)}
+                    onClick={() => {
+                      setAvisoReserva(null);
+                      setLivroSelecionado(livro);
+                    }}
                     className="w-full h-full flex flex-col items-center rounded-3xl bg-[#F8F5E4] p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition cursor-pointer"
                   >
-                    <div className="relative w-28 h-36 rounded-xl border-4 border-[#241916] bg-linear-to-br from-[#8b6753] to-[#3b2924] shadow-md overflow-hidden flex flex-col items-center justify-center">
+                    <div className="relative w-28 h-36 rounded-xl border-[4px] border-[#241916] bg-linear-to-br from-[#8b6753] to-[#3b2924] shadow-md overflow-hidden flex flex-col items-center justify-center">
                       <div className="absolute inset-1 border border-[#c3a58b]/70 rounded-sm" />
                       <span className="text-4xl text-[#d9c2a7] opacity-90">
                         ⚝
@@ -344,10 +382,39 @@ export function DashboardUsuario({ onLogout, IrPara }: DashboardUsuarioProps) {
               </div>
             </div>
 
+            {livroSelecionado.disponivel === true ? (
+              <p className="mt-5 text-center text-xs text-[#68745e]">
+                Este livro está disponível: é só retirar na biblioteca, sem
+                precisar reservar.
+              </p>
+            ) : (
+              <button
+                type="button"
+                onClick={reservarLivroSelecionado}
+                disabled={reservando || avisoReserva?.tipo === "ok"}
+                className="mt-5 w-full rounded-full bg-[#E08328] py-3 text-white font-serif italic font-bold hover:bg-[#c9731f] transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {reservando ? "Reservando..." : "Reservar este livro"}
+              </button>
+            )}
+
+            {avisoReserva && (
+              <p
+                role={avisoReserva.tipo === "erro" ? "alert" : "status"}
+                className={`mt-3 rounded-2xl px-4 py-3 text-center text-xs ${
+                  avisoReserva.tipo === "ok"
+                    ? "bg-[#DDE8CF] text-[#4B6B3A]"
+                    : "bg-[#F2CFC7] text-[#9A3A2A]"
+                }`}
+              >
+                {avisoReserva.texto}
+              </p>
+            )}
+
             <button
               type="button"
               onClick={() => setLivroSelecionado(null)}
-              className="mt-6 w-full rounded-full bg-[#78866d] py-3 text-white font-serif italic font-bold hover:bg-[#64765b] transition cursor-pointer"
+              className="mt-3 w-full rounded-full bg-[#78866d] py-3 text-white font-serif italic font-bold hover:bg-[#64765b] transition cursor-pointer"
             >
               Fechar
             </button>

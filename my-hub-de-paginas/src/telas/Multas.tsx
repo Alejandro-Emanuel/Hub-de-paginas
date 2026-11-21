@@ -31,17 +31,8 @@ export function Multas({ Voltar }: { Voltar: () => void }) {
   const [carregando, setCarregando] = useState(true);
   const [pesquisa, setPesquisa] = useState("");
   const [filtroStatus, setFiltroStatus] = useState("Todas");
-  const [modalAberto, setModalAberto] = useState(false);
   const [multaSelecionada, setMultaSelecionada] = useState<Multa | null>(null);
 
-  const [form, setForm] = useState({
-    usuario: "",
-    email: "",
-    livro: "",
-    motivo: "Atraso na devolução",
-    valor: "",
-    vencimento: "",
-  });
 
   // Carrega as multas da API do backend ao abrir a página
   useEffect(() => {
@@ -110,14 +101,6 @@ export function Multas({ Voltar }: { Voltar: () => void }) {
     } finally {
       setMultaSelecionada(null);
     }
-  }
-
-  function cadastrarMulta(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    // Se quiser salvar novas multas no banco futuramente, criaremos o POST na API.
-    // Por enquanto, mantemos a lógica visual ou integrada.
-    alert("Para persistir novas multas, a rota POST deve ser configurada no backend.");
-    setModalAberto(false);
   }
 
   function exportarCSV() {
@@ -201,12 +184,6 @@ export function Multas({ Voltar }: { Voltar: () => void }) {
               className="rounded-xl border border-[#536044] px-5 py-3 text-sm font-semibold text-[#536044] transition hover:bg-[#536044] hover:text-white"
             >
               Exportar CSV
-            </button>
-            <button
-              onClick={() => setModalAberto(true)}
-              className="rounded-xl bg-[#536044] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#3E4932]"
-            >
-              + Nova multa
             </button>
           </div>
         </header>
@@ -387,81 +364,6 @@ export function Multas({ Voltar }: { Voltar: () => void }) {
           My Hub · Sistema de Biblioteca · Banco de Dados Ativo
         </p>
       </div>
-
-      {/* Modal de cadastro */}
-      {modalAberto && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <form
-            onSubmit={cadastrarMulta}
-            className="w-full max-w-md space-y-4 rounded-3xl bg-[#FFF8E1] p-6 shadow-xl"
-          >
-            <h2 className="text-xl font-bold">Cadastrar multa</h2>
-            <input
-              required
-              value={form.usuario}
-              onChange={(event) => setForm({ ...form, usuario: event.target.value })}
-              placeholder="Usuário"
-              className="w-full rounded-xl border border-[#D5D7C5] bg-white px-4 py-3 text-sm"
-            />
-            <input
-              required
-              type="email"
-              value={form.email}
-              onChange={(event) => setForm({ ...form, email: event.target.value })}
-              placeholder="E-mail"
-              className="w-full rounded-xl border border-[#D5D7C5] bg-white px-4 py-3 text-sm"
-            />
-            <input
-              required
-              value={form.livro}
-              onChange={(event) => setForm({ ...form, livro: event.target.value })}
-              placeholder="Livro"
-              className="w-full rounded-xl border border-[#D5D7C5] bg-white px-4 py-3 text-sm"
-            />
-            <input
-              required
-              value={form.motivo}
-              onChange={(event) => setForm({ ...form, motivo: event.target.value })}
-              placeholder="Motivo"
-              className="w-full rounded-xl border border-[#D5D7C5] bg-white px-4 py-3 text-sm"
-            />
-            <div className="grid grid-cols-2 gap-3">
-              <input
-                required
-                type="number"
-                min="0"
-                step="0.01"
-                value={form.valor}
-                onChange={(event) => setForm({ ...form, valor: event.target.value })}
-                placeholder="Valor"
-                className="w-full rounded-xl border border-[#D5D7C5] bg-white px-4 py-3 text-sm"
-              />
-              <input
-                required
-                type="date"
-                value={form.vencimento}
-                onChange={(event) => setForm({ ...form, vencimento: event.target.value })}
-                className="w-full rounded-xl border border-[#D5D7C5] bg-white px-4 py-3 text-sm"
-              />
-            </div>
-            <div className="flex justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => setModalAberto(false)}
-                className="rounded-xl border border-[#D5D7C5] px-4 py-3 font-semibold"
-              >
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                className="rounded-xl bg-[#536044] px-4 py-3 font-semibold text-white"
-              >
-                Cadastrar
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
 
       {/* Modal de detalhes */}
       {multaSelecionada && (
