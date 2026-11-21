@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { chamarApi } from "@/lib/api";
+import { chamarApi } from "@/utils/api";
 import { BarraLateral } from "../components/BarraLateral";
 import { Titulo } from "../components/Titulo";
 import telaFundo from "../assets/iconeCards/telaDeFundo.png";
