@@ -4,6 +4,9 @@ import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { BarraLateral } from "../components/BarraLateral";
 import { Titulo } from "../components/Titulo";
+import { chamarApi } from "@/utils/api";
+import { diasDeAtraso, formatarData as formatarDataISO } from "@/utils/datas";
+import { estimarMulta } from "@/utils/multa";
 import telaFundo from "../assets/iconeCards/telaDeFundo.png";
 import perfil from "../assets/iconeCards/Perfil.png";
 import casinhaIcon from "../assets/iconeCards/casinhaIcon.png";
@@ -38,6 +41,23 @@ interface MultaUsuario {
 
 type Aba = "Pendente" | "Paga";
 
+// Empréstimo em andamento que já passou do prazo (a multa ainda não foi lançada)
+interface Atraso {
+  id: number;
+  livro: string;
+  prevista: string;
+  dias: number;
+  estimativa: number;
+}
+
+// Formato que /api/meusEmprestimos já devolve
+interface MeuEmprestimo {
+  id: number;
+  data_prevista_devolucao: string;
+  cadastro_livro: { nome: string };
+  devolucao: { id: number } | null;
+}
+
 const moeda = (valor: number) =>
   valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -52,6 +72,41 @@ export function MultasUsuario({ onLogout, IrPara }: MultasUsuarioProps) {
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState("");
   const [aba, setAba] = useState<Aba>("Pendente");
+  const [atrasados, setAtrasados] = useState<Atraso[]>([]);
+
+  // Empréstimos atrasados: a multa só é lançada na devolução, então aqui
+  // o aluno vê o aviso e uma estimativa do valor até hoje.
+  useEffect(() => {
+    let cancelado = false;
+
+    chamarApi<MeuEmprestimo[]>("/api/meusEmprestimos")
+      .then((dados) => {
+        if (cancelado || !Array.isArray(dados)) return;
+
+        setAtrasados(
+          dados
+            .filter((e) => !e.devolucao)
+            .map((e) => {
+              const dias = diasDeAtraso(e.data_prevista_devolucao);
+              return {
+                id: e.id,
+                livro: e.cadastro_livro.nome,
+                prevista: e.data_prevista_devolucao,
+                dias,
+                estimativa: estimarMulta(dias),
+              };
+            })
+            .filter((a) => a.dias > 0),
+        );
+      })
+      .catch(() => {
+        // sem aviso de atraso se não der para carregar; o resto da tela segue normal
+      });
+
+    return () => {
+      cancelado = true;
+    };
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -199,6 +254,49 @@ export function MultasUsuario({ onLogout, IrPara }: MultasUsuarioProps) {
             </p>
           </div>
         </div>
+
+        {/* Empréstimos em atraso (a multa ainda não foi lançada) */}
+        {atrasados.length > 0 && (
+          <section
+            aria-label="Empréstimos em atraso"
+            className="rounded-4xl bg-[#F5E3B8] p-6 shadow-lg text-[#7A5B1E]"
+          >
+            <h2 className="font-serif italic font-bold text-lg">
+              Atenção:{" "}
+              {atrasados.length === 1
+                ? "você tem 1 empréstimo em atraso"
+                : `você tem ${atrasados.length} empréstimos em atraso`}
+            </h2>
+
+            <ul className="mt-4 flex flex-col gap-3">
+              {atrasados.map((atraso) => (
+                <li
+                  key={atraso.id}
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-[#FFF8E1] px-5 py-3"
+                >
+                  <div className="min-w-0">
+                    <p className="font-serif italic font-bold text-[#52644f] truncate">
+                      {atraso.livro}
+                    </p>
+                    <p className="text-xs text-[#68745e]">
+                      Prazo era {formatarDataISO(atraso.prevista)} · {atraso.dias}{" "}
+                      dia(s) de atraso
+                    </p>
+                  </div>
+                  <p className="text-sm font-bold text-[#9A3A2A]">
+                    ≈ {moeda(atraso.estimativa)}
+                  </p>
+                </li>
+              ))}
+            </ul>
+
+            <p className="mt-4 text-xs">
+              A multa é lançada quando o livro é devolvido, e o valor final é
+              calculado pela biblioteca. Devolva o quanto antes para ela não
+              aumentar.
+            </p>
+          </section>
+        )}
 
         {/* Lista */}
         <section className="flex-1 rounded-4xl bg-[#FFF8E1] shadow-lg p-6 sm:p-8">

@@ -10,6 +10,7 @@ import {
   hojeISO,
   somarDias,
 } from "@/utils/datas";
+import { estimarMulta } from "@/utils/multa";
 import { BarraLateral } from "../components/BarraLateral";
 import { CardIcone } from "../components/CardsDashboard";
 import { Titulo } from "../components/Titulo";
@@ -31,9 +32,6 @@ interface EmprestimosDevolucoesProps {
 // ---- Regras que você pode ajustar ----------------------------------------
 const PRAZOS_EM_DIAS = [7, 14, 21];
 const PRAZO_PADRAO = 14;
-// Valor usado só para mostrar uma ESTIMATIVA da multa antes de confirmar.
-// O valor oficial é calculado e gravado pelo backend.
-const VALOR_MULTA_POR_DIA = 1;
 // ---------------------------------------------------------------------------
 
 // Formatos que a tela espera receber da API (veja a lista no final da resposta)
@@ -179,7 +177,7 @@ export function EmprestimosDevolucoes({
     setCarregando(true);
     setErroLista("");
 
-    chamarApi<EmprestimoAdm[]>("/api/emprestimos")
+    chamarApi<EmprestimoAdm[]>("/api/emprestimo")
       .then((dados) => {
         if (!cancelado) setLista(Array.isArray(dados) ? dados : []);
       })
@@ -222,7 +220,7 @@ export function EmprestimosDevolucoes({
     setAvisoNovo(null);
 
     try {
-      await chamarApi("/api/emprestimos", {
+      await chamarApi("/api/emprestimo", {
         method: "POST",
         body: JSON.stringify({
           usuarioId: usuarioSel.id,
@@ -660,6 +658,16 @@ export function EmprestimosDevolucoes({
                             </p>
                           )}
 
+                          {situacao === "Atrasado" && (
+                            <p className="mt-3 text-xs font-bold text-[#9A3A2A]">
+                              {diasDeAtraso(item.dataPrevistaDevolucao)} dia(s) de atraso ·
+                              multa estimada até hoje:{" "}
+                              {moeda(
+                                estimarMulta(diasDeAtraso(item.dataPrevistaDevolucao)),
+                              )}
+                            </p>
+                          )}
+
                           {situacao !== "Devolvido" && (
                             <button
                               type="button"
@@ -715,7 +723,7 @@ export function EmprestimosDevolucoes({
             {diasAtrasoModal > 0 ? (
               <p className="mt-4 rounded-2xl bg-[#F2CFC7] px-4 py-3 text-sm text-[#9A3A2A]">
                 {diasAtrasoModal} dia(s) de atraso. Multa estimada:{" "}
-                <strong>{moeda(diasAtrasoModal * VALOR_MULTA_POR_DIA)}</strong>.
+                <strong>{moeda(estimarMulta(diasAtrasoModal))}</strong>.
                 O valor final é calculado pelo sistema ao confirmar.
               </p>
             ) : (
