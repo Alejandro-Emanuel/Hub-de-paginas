@@ -1,296 +1,750 @@
 "use client";
 
-import { useState } from "react";
+import Image from "next/image";
+import { useEffect, useMemo, useState } from "react";
 import { Tela } from "@/lib/telas";
+import { chamarApi } from "@/lib/api";
+import {
+  diasDeAtraso,
+  formatarData,
+  hojeISO,
+  somarDias,
+} from "@/lib/datas";
+import { BarraLateral } from "../components/BarraLateral";
+import { CardIcone } from "../components/CardsDashboard";
+import { Titulo } from "../components/Titulo";
+import telaFundo from "../assets/iconeCards/telaDeFundo.png";
+import perfil from "../assets/iconeCards/Perfil.png";
+import casinhaIcon from "../assets/iconeCards/casinhaIcon.png";
+import livroIcon from "../assets/iconeCards/Livro.png";
+import renovacaoIcon from "../assets/iconeCards/Renovacao.png";
+import multaIcon from "../assets/iconeCards/Multa.png";
+import clipIcon from "../assets/iconeCards/Paperclip.png";
+import ajudaIcon from "../assets/iconeCards/interrogaçãoIcon.png";
+import logoutIcon from "../assets/iconeCards/Log out.png";
 
 interface EmprestimosDevolucoesProps {
   onLogout: () => void;
   IrPara: (tela: Tela) => void;
 }
 
-interface Usuario {
+// ---- Regras que você pode ajustar ----------------------------------------
+const PRAZOS_EM_DIAS = [7, 14, 21];
+const PRAZO_PADRAO = 14;
+// Valor usado só para mostrar uma ESTIMATIVA da multa antes de confirmar.
+// O valor oficial é calculado e gravado pelo backend.
+const VALOR_MULTA_POR_DIA = 1;
+// ---------------------------------------------------------------------------
+
+// Formatos que a tela espera receber da API (veja a lista no final da resposta)
+interface UsuarioBusca {
   id: number;
   nome: string;
   email: string;
-  matricula: string;
 }
 
-interface Emprestimo {
+interface LivroBusca {
+  id: number;
+  nome: string;
+  nome_do_autor: string;
+  disponivel?: boolean; // se a API ainda não manda, a tela libera o livro
+}
+
+interface MultaInfo {
+  valor: number;
+  diasAtraso: number;
+  status: string;
+}
+
+interface EmprestimoAdm {
   id: number;
   usuario: string;
   livro: string;
-  dataEmprestimo: string;
-  dataDevolucao: string;
-  status: "Em andamento" | "Atrasado" | "Devolvido";
+  dataEmprestimo: string; // yyyy-mm-dd
+  dataPrevistaDevolucao: string; // yyyy-mm-dd
+  dataDevolucao: string | null; // yyyy-mm-dd ou null enquanto não devolveu
+  multa?: MultaInfo | null;
 }
 
-const usuarios: Usuario[] = [
-  { id: 1, nome: "João Silva", email: "joao@email.com", matricula: "2024001" },
-  { id: 2, nome: "Maria Oliveira", email: "maria@email.com", matricula: "2024002" },
-  { id: 3, nome: "Pedro Santos", email: "pedro@email.com", matricula: "2024003" },
-  { id: 4, nome: "Ana Costa", email: "ana@email.com", matricula: "2024004" },
+type Situacao = "Em andamento" | "Atrasado" | "Devolvido";
+type Painel = "novo" | "devolucoes" | null;
+type Aviso = { tipo: "ok" | "erro"; texto: string } | null;
+
+const FILTROS: Array<"Todos" | Situacao> = [
+  "Todos",
+  "Em andamento",
+  "Atrasado",
+  "Devolvido",
 ];
 
-const emprestimos: Emprestimo[] = [
-  { id: 1, usuario: "João Silva", livro: "All Tomorrows", dataEmprestimo: "05/11/2026", dataDevolucao: "15/11/2026", status: "Em andamento" },
-  { id: 2, usuario: "Maria Oliveira", livro: "O Chamado de Cthulhu", dataEmprestimo: "20/10/2026", dataDevolucao: "30/10/2026", status: "Atrasado" },
-  { id: 3, usuario: "Pedro Santos", livro: "Orgulho e Preconceito", dataEmprestimo: "01/11/2026", dataDevolucao: "10/11/2026", status: "Devolvido" },
-];
+const corSituacao: Record<Situacao, string> = {
+  "Em andamento": "bg-[#F5E3B8] text-[#7A5B1E]",
+  Atrasado: "bg-[#F2CFC7] text-[#9A3A2A]",
+  Devolvido: "bg-[#DDE8CF] text-[#4B6B3A]",
+};
 
-const statusList = ["Todos", "Em andamento", "Atrasado", "Devolvido"];
+const moeda = (valor: number) =>
+  valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+function situacaoDe(emprestimo: EmprestimoAdm): Situacao {
+  if (emprestimo.dataDevolucao) return "Devolvido";
+  return diasDeAtraso(emprestimo.dataPrevistaDevolucao) > 0
+    ? "Atrasado"
+    : "Em andamento";
+}
+
+const mensagemDe = (erro: unknown, padrao: string) =>
+  erro instanceof Error ? erro.message : padrao;
+
+const estiloBusca =
+  "w-full rounded-full bg-white/70 px-5 py-3 text-sm outline-none focus:ring-2 focus:ring-[#4A5546]";
 
 export function EmprestimosDevolucoes({
   onLogout,
   IrPara,
 }: EmprestimosDevolucoesProps) {
-  const [modo, setModo] = useState<"inicio" | "usuarios" | "devolucoes">("inicio");
+  const [painel, setPainel] = useState<Painel>(null);
+
+  // ----- Registrar empréstimo -----
+  const [buscaUsuario, setBuscaUsuario] = useState("");
+  const [usuarios, setUsuarios] = useState<UsuarioBusca[]>([]);
+  const [usuarioSel, setUsuarioSel] = useState<UsuarioBusca | null>(null);
+  const [buscaLivro, setBuscaLivro] = useState("");
+  const [livros, setLivros] = useState<LivroBusca[]>([]);
+  const [livroSel, setLivroSel] = useState<LivroBusca | null>(null);
+  const [prazo, setPrazo] = useState(PRAZO_PADRAO);
+  const [enviando, setEnviando] = useState(false);
+  const [avisoNovo, setAvisoNovo] = useState<Aviso>(null);
+
+  // ----- Devoluções -----
+  const [lista, setLista] = useState<EmprestimoAdm[]>([]);
+  const [carregando, setCarregando] = useState(false);
+  const [erroLista, setErroLista] = useState("");
+  const [versao, setVersao] = useState(0); // aumenta para recarregar a lista
+  const [filtro, setFiltro] = useState<"Todos" | Situacao>("Todos");
   const [pesquisa, setPesquisa] = useState("");
-  const [usuarioSelecionado, setUsuarioSelecionado] = useState<Usuario | null>(null);
-  const [filtroStatus, setFiltroStatus] = useState("Todos");
+  const [confirmando, setConfirmando] = useState<EmprestimoAdm | null>(null);
+  const [enviandoDev, setEnviandoDev] = useState(false);
+  const [avisoDev, setAvisoDev] = useState<Aviso>(null);
 
-  const usuariosFiltrados = usuarios.filter((u) =>
-    [u.nome, u.email, u.matricula].some((campo) =>
-      campo.toLowerCase().includes(pesquisa.toLowerCase())
-    )
-  );
+  // Busca de usuários (só enquanto nenhum foi escolhido)
+  useEffect(() => {
+    if (painel !== "novo" || usuarioSel) return;
+    let cancelado = false;
 
-  const emprestimosFiltrados = emprestimos.filter(
-    (e) =>
-      (filtroStatus === "Todos" || e.status === filtroStatus) &&
-      (!usuarioSelecionado || e.usuario === usuarioSelecionado.nome)
-  );
+    const timer = setTimeout(async () => {
+      try {
+        const dados = await chamarApi<UsuarioBusca[]>(
+          `/api/usuarios?busca=${encodeURIComponent(buscaUsuario)}`,
+        );
+        if (!cancelado) setUsuarios(Array.isArray(dados) ? dados : []);
+      } catch {
+        if (!cancelado) setUsuarios([]);
+      }
+    }, 300);
 
-  const selecionarModo = (novoModo: "usuarios" | "devolucoes") => {
-    setModo(novoModo);
-    setPesquisa("");
-    setUsuarioSelecionado(null);
-    setFiltroStatus("Todos");
-  };
+    return () => {
+      cancelado = true;
+      clearTimeout(timer);
+    };
+  }, [painel, buscaUsuario, usuarioSel]);
 
-  const voltar = () => setModo("inicio");
+  // Busca de livros (só enquanto nenhum foi escolhido)
+  useEffect(() => {
+    if (painel !== "novo" || livroSel) return;
+    let cancelado = false;
 
-  const corStatus = (status: Emprestimo["status"]) => ({
-    "Atrasado": "bg-[#f3d3c1] text-[#9b5139]",
-    "Devolvido": "bg-[#cbdcc0] text-[#4f7049]",
-    "Em andamento": "bg-[#eee0b9] text-[#85703d]",
-  }[status]);
+    const timer = setTimeout(async () => {
+      try {
+        const dados = await chamarApi<LivroBusca[]>(
+          `/api/livros?busca=${encodeURIComponent(buscaLivro)}`,
+        );
+        if (!cancelado) setLivros(Array.isArray(dados) ? dados : []);
+      } catch {
+        if (!cancelado) setLivros([]);
+      }
+    }, 300);
+
+    return () => {
+      cancelado = true;
+      clearTimeout(timer);
+    };
+  }, [painel, buscaLivro, livroSel]);
+
+  // Lista de empréstimos
+  useEffect(() => {
+    if (painel !== "devolucoes") return;
+    let cancelado = false;
+
+    setCarregando(true);
+    setErroLista("");
+
+    chamarApi<EmprestimoAdm[]>("/api/emprestimos")
+      .then((dados) => {
+        if (!cancelado) setLista(Array.isArray(dados) ? dados : []);
+      })
+      .catch((erro) => {
+        if (!cancelado) {
+          setErroLista(mensagemDe(erro, "Não foi possível carregar os empréstimos."));
+        }
+      })
+      .finally(() => {
+        if (!cancelado) setCarregando(false);
+      });
+
+    return () => {
+      cancelado = true;
+    };
+  }, [painel, versao]);
+
+  const listaFiltrada = useMemo(() => {
+    const termo = pesquisa.trim().toLowerCase();
+    return lista.filter((item) => {
+      const combinaFiltro = filtro === "Todos" || situacaoDe(item) === filtro;
+      const combinaBusca =
+        !termo ||
+        item.usuario.toLowerCase().includes(termo) ||
+        item.livro.toLowerCase().includes(termo);
+      return combinaFiltro && combinaBusca;
+    });
+  }, [lista, filtro, pesquisa]);
+
+  function abrirPainel(novo: Exclude<Painel, null>) {
+    setPainel(novo);
+    setAvisoNovo(null);
+    setAvisoDev(null);
+  }
+
+  async function registrarEmprestimo() {
+    if (!usuarioSel || !livroSel) return;
+
+    setEnviando(true);
+    setAvisoNovo(null);
+
+    try {
+      await chamarApi("/api/emprestimos", {
+        method: "POST",
+        body: JSON.stringify({
+          usuarioId: usuarioSel.id,
+          livroId: livroSel.id,
+          dias: prazo,
+        }),
+      });
+
+      setAvisoNovo({
+        tipo: "ok",
+        texto: `Empréstimo registrado: "${livroSel.nome}" para ${usuarioSel.nome}. Devolução prevista em ${formatarData(somarDias(hojeISO(), prazo))}.`,
+      });
+      setUsuarioSel(null);
+      setLivroSel(null);
+      setBuscaUsuario("");
+      setBuscaLivro("");
+      setPrazo(PRAZO_PADRAO);
+    } catch (erro) {
+      setAvisoNovo({
+        tipo: "erro",
+        texto: mensagemDe(erro, "Não foi possível registrar o empréstimo."),
+      });
+    } finally {
+      setEnviando(false);
+    }
+  }
+
+  async function confirmarDevolucao() {
+    if (!confirmando) return;
+
+    setEnviandoDev(true);
+
+    try {
+      const resposta = await chamarApi<{ multa?: MultaInfo | null }>(
+        "/api/devolucoes",
+        {
+          method: "POST",
+          body: JSON.stringify({ emprestimoId: confirmando.id }),
+        },
+      );
+
+      setAvisoDev({
+        tipo: "ok",
+        texto: resposta.multa
+          ? `Devolução registrada. Multa gerada: ${moeda(resposta.multa.valor)} (${resposta.multa.diasAtraso} dia(s) de atraso).`
+          : "Devolução registrada sem multa.",
+      });
+      setConfirmando(null);
+      setVersao((v) => v + 1);
+    } catch (erro) {
+      setAvisoDev({
+        tipo: "erro",
+        texto: mensagemDe(erro, "Não foi possível registrar a devolução."),
+      });
+      setConfirmando(null);
+    } finally {
+      setEnviandoDev(false);
+    }
+  }
+
+  const diasAtrasoModal = confirmando
+    ? diasDeAtraso(confirmando.dataPrevistaDevolucao)
+    : 0;
 
   return (
-    <main className="min-h-screen w-full bg-[#c5cbaa] p-3 sm:p-5 flex flex-col md:flex-row gap-5">
+    <div
+      className="min-h-screen bg-[#C5CBB0] flex gap-6 p-6"
+      style={{ backgroundImage: `url(${telaFundo.src})` }}
+    >
+      <BarraLateral.Root>
+        <Image
+          src={perfil}
+          alt="Perfil do administrador"
+          className="w-20 h-20 rounded-full mx-auto"
+        />
+        <hr />
 
-      <aside className="w-full md:w-[65px] md:min-h-[calc(100vh-40px)] flex flex-col justify-between shrink-0">
-        <div className="rounded-[28px] bg-[#f8f5df] px-2 py-3 shadow-sm">
+        <BarraLateral.Item onClick={() => IrPara("dashboardAdm")}>
+          <Image src={casinhaIcon} alt="" className="w-6 h-6" />
+          Início
+        </BarraLateral.Item>
 
-          <button onClick={() => IrPara("dashboardAdm")} title="Perfil" className="w-full flex justify-center mb-5">
-            <svg viewBox="0 0 40 40" className="w-9 h-9" fill="none">
-              <circle cx="20" cy="20" r="17" fill="#78836f" />
-              <circle cx="20" cy="14" r="6" fill="#f8f5df" />
-              <path d="M8 31C9.5 24.5 14 21 20 21C26 21 30.5 24.5 32 31" fill="#f8f5df" />
-            </svg>
-          </button>
+        <BarraLateral.Item onClick={() => IrPara("cadastrarLivros")}>
+          <Image src={livroIcon} alt="" className="w-6 h-6" />
+          Livros
+        </BarraLateral.Item>
 
-          <div className="border-t border-[#c5cbb7] mb-5 mx-1" />
+        <BarraLateral.Item onClick={() => IrPara("multas")}>
+          <Image src={multaIcon} alt="" className="w-6 h-6" />
+          Multas
+        </BarraLateral.Item>
 
-          <nav className="flex flex-row md:flex-col items-center justify-around md:gap-7">
-            {[
-              ["help", "ⓘ", "Ajuda"],
-              ["cadastrarLivros", "▤", "Livros"],
-              ["relatorios", "♧", "Relatórios"],
-            ].map(([tela, icone, titulo]) => (
-              <button
-                key={tela}
-                onClick={() => IrPara(tela as Tela)}
-                title={titulo}
-                className="text-[#64735d] text-2xl hover:text-[#283a2d] transition"
-              >
-                {icone}
-              </button>
-            ))}
-          </nav>
+        <BarraLateral.Item onClick={() => IrPara("relatorios")}>
+          <Image src={clipIcon} alt="" className="w-6 h-6" />
+          Relatórios
+        </BarraLateral.Item>
+
+        <div className="mt-auto flex flex-col gap-4">
+          <BarraLateral.Item onClick={() => IrPara("help")}>
+            <Image src={ajudaIcon} alt="" className="w-6 h-6" />
+            Ajuda
+          </BarraLateral.Item>
+
+          <BarraLateral.Item onClick={onLogout}>
+            <Image src={logoutIcon} alt="" className="w-6 h-6" />
+            Log out
+          </BarraLateral.Item>
         </div>
+      </BarraLateral.Root>
 
-        <div className="rounded-[25px] bg-[#f8f5df] px-2 py-3 shadow-sm flex justify-center items-center">
-          <button onClick={onLogout} title="Sair" className="text-[#64735d] text-2xl hover:text-[#283a2d] transition">
-            ⇥
-          </button>
-        </div>
-      </aside>
+      <main className="flex-1 min-w-0 flex flex-col gap-6">
+        <Titulo>Empréstimos e Devoluções</Titulo>
 
-      <section className="flex-1 min-w-0 flex flex-col gap-4">
+        <div className="flex flex-1 flex-col md:flex-row gap-8">
+          <div className="flex md:flex-col gap-6 md:justify-around">
+            <CardIcone.Root onClick={() => abrirPainel("novo")}>
+              <Image
+                src={livroIcon}
+                alt="Registrar empréstimo"
+                className="w-20 h-20 object-contain"
+              />
+              <CardIcone.Texto>Registrar empréstimo</CardIcone.Texto>
+            </CardIcone.Root>
 
-        <header className="h-[43px] rounded-full bg-[#faf8e9] flex items-center justify-center shadow-sm">
-          <h1 className="font-serif italic font-bold tracking-[1px] text-[#63735e] text-sm sm:text-base">
-            Empréstimos e Devoluções
-          </h1>
-        </header>
-
-        <div className="flex-1 grid grid-cols-1 md:grid-cols-[120px_minmax(0,1fr)] gap-5 md:gap-7">
-
-          <div className="flex flex-row md:flex-col justify-center md:justify-start gap-5 md:gap-12 py-3">
-            {[
-              { modo: "usuarios", titulo: <>Buscar<br />usuários</>, icone: "usuario" },
-              { modo: "devolucoes", titulo: <>Estado<br />Devolução</>, icone: "relogio" },
-            ].map((item) => (
-              <button
-                key={item.modo}
-                onClick={() => selecionarModo(item.modo as "usuarios" | "devolucoes")}
-                className={`w-[105px] h-[100px] rounded-[25px] bg-[#fff9e5] shadow-[0_4px_8px_rgba(0,0,0,0.17)] flex flex-col items-center justify-center gap-1 transition hover:-translate-y-1 ${
-                  modo === item.modo ? "ring-2 ring-[#89977c]" : ""
-                }`}
-              >
-                {item.icone === "usuario" ? (
-                  <svg viewBox="0 0 60 60" className="w-12 h-12" fill="none">
-                    <circle cx="30" cy="30" r="23" stroke="#78836f" strokeWidth="5" />
-                    <circle cx="30" cy="21" r="8" fill="#78836f" />
-                    <path d="M13 45C15 36 21 32 30 32C39 32 45 36 47 45" fill="#78836f" />
-                  </svg>
-                ) : (
-                  <svg viewBox="0 0 60 60" className="w-12 h-12" fill="none" stroke="#111" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M49 23A22 22 0 1 0 51 34" />
-                    <path d="M49 8V23H34" />
-                    <path d="M30 17V30L39 38" />
-                  </svg>
-                )}
-
-                <span className="font-serif italic font-bold text-[#63735e] text-sm text-center leading-tight">
-                  {item.titulo}
-                </span>
-              </button>
-            ))}
+            <CardIcone.Root onClick={() => abrirPainel("devolucoes")}>
+              <Image
+                src={renovacaoIcon}
+                alt="Devoluções"
+                className="w-20 h-20 object-contain"
+              />
+              <CardIcone.Texto>Devoluções</CardIcone.Texto>
+            </CardIcone.Root>
           </div>
 
-          <section className="min-h-[450px] rounded-[28px] bg-[#fff9e5] shadow-[0_3px_8px_rgba(0,0,0,0.12)] p-5 sm:p-7 overflow-y-auto">
-
-            {modo === "inicio" && (
-              <div className="h-full min-h-[400px] flex items-center justify-center">
-                <p className="font-serif italic text-[#89927c] text-center">
-                  Selecione uma opção para começar.
-                </p>
-              </div>
+          <section className="flex-1 min-w-0 bg-[#FFF8E1] text-[#4A5546] rounded-4xl shadow-lg p-6 min-h-96 max-h-[75vh] overflow-y-auto flex flex-col gap-4">
+            {painel === null && (
+              <p className="m-auto text-center font-serif italic">
+                Escolha uma opção
+              </p>
             )}
 
-            {modo === "usuarios" && (
-              <div>
-                <div className="flex items-center justify-between flex-wrap gap-3 mb-6">
-                  <h2 className="font-serif italic font-bold text-[#63735e] text-lg">
-                    Buscar usuários
-                  </h2>
-                  <button onClick={voltar} className="text-[#63735e] text-sm hover:underline">
-                    Voltar
-                  </button>
+            {/* ------------------ REGISTRAR EMPRÉSTIMO ------------------ */}
+            {painel === "novo" && (
+              <>
+                <h2 className="font-serif italic font-bold text-lg">
+                  Registrar empréstimo
+                </h2>
+
+                {avisoNovo && (
+                  <p
+                    role={avisoNovo.tipo === "erro" ? "alert" : "status"}
+                    className={`rounded-2xl px-4 py-3 text-sm ${
+                      avisoNovo.tipo === "ok"
+                        ? "bg-[#DDE8CF] text-[#4B6B3A]"
+                        : "bg-[#F2CFC7] text-[#9A3A2A]"
+                    }`}
+                  >
+                    {avisoNovo.texto}
+                  </p>
+                )}
+
+                {/* 1. Usuário */}
+                <div className="flex flex-col gap-2">
+                  <p className="font-serif italic font-bold text-sm">
+                    1. Usuário
+                  </p>
+
+                  {usuarioSel ? (
+                    <div className="flex items-center justify-between gap-3 rounded-2xl bg-white/60 px-5 py-3">
+                      <div className="min-w-0">
+                        <p className="font-serif italic font-bold truncate">
+                          {usuarioSel.nome}
+                        </p>
+                        <p className="text-xs opacity-70 truncate">
+                          {usuarioSel.email}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setUsuarioSel(null)}
+                        className="text-xs font-bold text-[#E08328] hover:underline cursor-pointer"
+                      >
+                        Trocar
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <input
+                        type="text"
+                        value={buscaUsuario}
+                        onChange={(e) => setBuscaUsuario(e.target.value)}
+                        placeholder="Buscar usuário por nome ou e-mail"
+                        aria-label="Buscar usuário"
+                        className={estiloBusca}
+                      />
+                      <ul className="flex flex-col gap-2 max-h-48 overflow-y-auto">
+                        {usuarios.map((usuario) => (
+                          <li key={usuario.id}>
+                            <button
+                              type="button"
+                              onClick={() => setUsuarioSel(usuario)}
+                              className="w-full text-left rounded-2xl bg-white/60 px-5 py-3 hover:bg-white transition cursor-pointer"
+                            >
+                              <p className="font-serif italic font-bold">
+                                {usuario.nome}
+                              </p>
+                              <p className="text-xs opacity-70">
+                                {usuario.email}
+                              </p>
+                            </button>
+                          </li>
+                        ))}
+                        {usuarios.length === 0 && (
+                          <li className="text-xs opacity-70 px-2">
+                            Nenhum usuário encontrado.
+                          </li>
+                        )}
+                      </ul>
+                    </>
+                  )}
                 </div>
+
+                {/* 2. Livro */}
+                <div className="flex flex-col gap-2">
+                  <p className="font-serif italic font-bold text-sm">2. Livro</p>
+
+                  {livroSel ? (
+                    <div className="flex items-center justify-between gap-3 rounded-2xl bg-white/60 px-5 py-3">
+                      <div className="min-w-0">
+                        <p className="font-serif italic font-bold truncate">
+                          {livroSel.nome}
+                        </p>
+                        <p className="text-xs opacity-70 truncate">
+                          {livroSel.nome_do_autor}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setLivroSel(null)}
+                        className="text-xs font-bold text-[#E08328] hover:underline cursor-pointer"
+                      >
+                        Trocar
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <input
+                        type="text"
+                        value={buscaLivro}
+                        onChange={(e) => setBuscaLivro(e.target.value)}
+                        placeholder="Buscar livro por título, autor ou gênero"
+                        aria-label="Buscar livro"
+                        className={estiloBusca}
+                      />
+                      <ul className="flex flex-col gap-2 max-h-48 overflow-y-auto">
+                        {livros.map((livro) => {
+                          const emprestado = livro.disponivel === false;
+                          return (
+                            <li key={livro.id}>
+                              <button
+                                type="button"
+                                disabled={emprestado}
+                                onClick={() => setLivroSel(livro)}
+                                className="w-full flex items-center justify-between gap-3 text-left rounded-2xl bg-white/60 px-5 py-3 hover:bg-white transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                <span className="min-w-0">
+                                  <span className="block font-serif italic font-bold truncate">
+                                    {livro.nome}
+                                  </span>
+                                  <span className="block text-xs opacity-70 truncate">
+                                    {livro.nome_do_autor}
+                                  </span>
+                                </span>
+                                {emprestado && (
+                                  <span className="shrink-0 rounded-full bg-[#F5E3B8] px-3 py-1 text-[11px] font-bold text-[#7A5B1E]">
+                                    Emprestado
+                                  </span>
+                                )}
+                              </button>
+                            </li>
+                          );
+                        })}
+                        {livros.length === 0 && (
+                          <li className="text-xs opacity-70 px-2">
+                            Nenhum livro encontrado.
+                          </li>
+                        )}
+                      </ul>
+                    </>
+                  )}
+                </div>
+
+                {/* 3. Prazo */}
+                <div className="flex flex-col gap-2">
+                  <p className="font-serif italic font-bold text-sm">3. Prazo</p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {PRAZOS_EM_DIAS.map((dias) => (
+                      <button
+                        key={dias}
+                        type="button"
+                        onClick={() => setPrazo(dias)}
+                        className={`rounded-full px-4 py-2 text-sm font-serif italic font-bold transition cursor-pointer ${
+                          prazo === dias
+                            ? "bg-[#87947b] text-white shadow-inner"
+                            : "bg-[#dce0cb] text-[#586b55] hover:bg-[#c9d1b8]"
+                        }`}
+                      >
+                        {dias} dias
+                      </button>
+                    ))}
+                    <span className="text-xs opacity-70">
+                      Devolução prevista em {formatarData(somarDias(hojeISO(), prazo))}
+                    </span>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={registrarEmprestimo}
+                  disabled={!usuarioSel || !livroSel || enviando}
+                  className="self-start rounded-full bg-[#78866d] px-8 py-3 text-white font-serif italic font-bold hover:bg-[#64765b] transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {enviando ? "Registrando..." : "Registrar empréstimo"}
+                </button>
+              </>
+            )}
+
+            {/* ------------------------ DEVOLUÇÕES ------------------------ */}
+            {painel === "devolucoes" && (
+              <>
+                <h2 className="font-serif italic font-bold text-lg">
+                  Devoluções
+                </h2>
+
+                {avisoDev && (
+                  <p
+                    role={avisoDev.tipo === "erro" ? "alert" : "status"}
+                    className={`rounded-2xl px-4 py-3 text-sm ${
+                      avisoDev.tipo === "ok"
+                        ? "bg-[#DDE8CF] text-[#4B6B3A]"
+                        : "bg-[#F2CFC7] text-[#9A3A2A]"
+                    }`}
+                  >
+                    {avisoDev.texto}
+                  </p>
+                )}
 
                 <input
+                  type="text"
                   value={pesquisa}
                   onChange={(e) => setPesquisa(e.target.value)}
-                  placeholder="Pesquisar por nome, e-mail ou matrícula..."
-                  className="w-full rounded-full bg-[#e9ead8] px-5 py-3 text-sm text-[#4e5749] outline-none focus:ring-2 focus:ring-[#89977c]"
+                  placeholder="Buscar por usuário ou livro"
+                  aria-label="Buscar empréstimos"
+                  className={estiloBusca}
                 />
 
-                <div className="mt-5 space-y-3">
-                  {usuariosFiltrados.map((usuario) => (
+                <div className="flex flex-wrap gap-2">
+                  {FILTROS.map((item) => (
                     <button
-                      key={usuario.id}
-                      onClick={() => setUsuarioSelecionado(usuario)}
-                      className="w-full text-left rounded-2xl bg-[#e9ead8] p-4 hover:bg-[#dce1cc] transition"
-                    >
-                      <p className="font-serif italic font-bold text-[#586b55]">{usuario.nome}</p>
-                      <p className="text-xs text-[#77816b] mt-1">{usuario.email}</p>
-                      <p className="text-xs text-[#77816b] mt-1">Matrícula: {usuario.matricula}</p>
-                    </button>
-                  ))}
-
-                  {!usuariosFiltrados.length && (
-                    <p className="text-center py-8 text-sm text-[#77816b]">
-                      Nenhum usuário encontrado.
-                    </p>
-                  )}
-                </div>
-
-                {usuarioSelecionado && (
-                  <div className="mt-6 rounded-2xl bg-[#e0e5d1] p-4">
-                    <h3 className="font-serif italic font-bold text-[#586b55] mb-3">
-                      Empréstimos de {usuarioSelecionado.nome}
-                    </h3>
-
-                    {emprestimos.filter((e) => e.usuario === usuarioSelecionado.nome).map((item) => (
-                      <div key={item.id} className="border-b border-[#c3cbb5] py-3 last:border-0">
-                        <p className="font-bold text-sm text-[#586b55]">{item.livro}</p>
-                        <p className="text-xs text-[#77816b] mt-1">Devolução prevista: {item.dataDevolucao}</p>
-                        <p className="text-xs text-[#77816b] mt-1">Situação: {item.status}</p>
-                      </div>
-                    ))}
-
-                    {!emprestimos.some((e) => e.usuario === usuarioSelecionado.nome) && (
-                      <p className="text-sm text-[#77816b]">
-                        Este usuário não possui empréstimos registrados.
-                      </p>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {modo === "devolucoes" && (
-              <div>
-                <div className="flex items-center justify-between flex-wrap gap-3 mb-6">
-                  <h2 className="font-serif italic font-bold text-[#63735e] text-lg">
-                    Estado das devoluções
-                  </h2>
-                  <button onClick={voltar} className="text-[#63735e] text-sm hover:underline">
-                    Voltar
-                  </button>
-                </div>
-
-                <div className="flex flex-wrap gap-2 mb-5">
-                  {statusList.map((status) => (
-                    <button
-                      key={status}
-                      onClick={() => setFiltroStatus(status)}
-                      className={`rounded-full px-4 py-2 text-xs font-serif italic transition ${
-                        filtroStatus === status
-                          ? "bg-[#78866d] text-white"
-                          : "bg-[#e4e8d6] text-[#586b55] hover:bg-[#d5ddc8]"
+                      key={item}
+                      type="button"
+                      onClick={() => setFiltro(item)}
+                      className={`rounded-full px-4 py-2 text-xs font-serif italic font-bold transition cursor-pointer ${
+                        filtro === item
+                          ? "bg-[#87947b] text-white shadow-inner"
+                          : "bg-[#dce0cb] text-[#586b55] hover:bg-[#c9d1b8]"
                       }`}
                     >
-                      {status}
+                      {item}
                     </button>
                   ))}
                 </div>
 
-                <div className="space-y-3">
-                  {emprestimosFiltrados.map((item) => (
-                    <div key={item.id} className="rounded-2xl bg-[#e9ead8] p-4">
-                      <div className="flex justify-between items-start gap-3 flex-wrap">
-                        <div>
-                          <h3 className="font-serif italic font-bold text-[#586b55]">{item.livro}</h3>
-                          <p className="text-xs text-[#77816b] mt-1">Usuário: {item.usuario}</p>
-                        </div>
+                {carregando ? (
+                  <p className="py-8 text-center font-serif italic">
+                    Carregando empréstimos...
+                  </p>
+                ) : erroLista ? (
+                  <p role="alert" className="py-8 text-center text-red-700">
+                    {erroLista}
+                  </p>
+                ) : listaFiltrada.length === 0 ? (
+                  <p className="py-8 text-center font-serif italic">
+                    Nenhum empréstimo encontrado.
+                  </p>
+                ) : (
+                  <ul className="flex flex-col gap-3">
+                    {listaFiltrada.map((item) => {
+                      const situacao = situacaoDe(item);
+                      return (
+                        <li
+                          key={item.id}
+                          className="rounded-2xl bg-white/60 px-5 py-4"
+                        >
+                          <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <p className="font-serif italic font-bold">
+                                {item.livro}
+                              </p>
+                              <p className="text-xs opacity-70">
+                                Usuário: {item.usuario}
+                              </p>
+                            </div>
+                            <span
+                              className={`rounded-full px-3 py-1 text-[11px] font-bold ${corSituacao[situacao]}`}
+                            >
+                              {situacao}
+                            </span>
+                          </div>
 
-                        <span className={`rounded-full px-3 py-1 text-[11px] font-bold ${corStatus(item.status)}`}>
-                          {item.status}
-                        </span>
-                      </div>
+                          <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs opacity-80">
+                            <p>
+                              Empréstimo:
+                              <br />
+                              <strong>{formatarData(item.dataEmprestimo)}</strong>
+                            </p>
+                            <p>
+                              Prevista:
+                              <br />
+                              <strong>
+                                {formatarData(item.dataPrevistaDevolucao)}
+                              </strong>
+                            </p>
+                            <p>
+                              Devolvido em:
+                              <br />
+                              <strong>{formatarData(item.dataDevolucao)}</strong>
+                            </p>
+                          </div>
 
-                      <div className="mt-4 grid grid-cols-2 gap-3 text-xs text-[#77816b]">
-                        <p>Empréstimo:<br /><strong>{item.dataEmprestimo}</strong></p>
-                        <p>Devolução:<br /><strong>{item.dataDevolucao}</strong></p>
-                      </div>
-                    </div>
-                  ))}
+                          {item.multa && (
+                            <p className="mt-3 text-xs font-bold text-[#9A3A2A]">
+                              Multa: {moeda(item.multa.valor)} ({item.multa.diasAtraso}{" "}
+                              dia(s) de atraso) · {item.multa.status}
+                            </p>
+                          )}
 
-                  {!emprestimosFiltrados.length && (
-                    <p className="text-center py-8 text-sm text-[#77816b]">
-                      Nenhum empréstimo encontrado.
-                    </p>
-                  )}
-                </div>
-              </div>
+                          {situacao !== "Devolvido" && (
+                            <button
+                              type="button"
+                              onClick={() => setConfirmando(item)}
+                              className="mt-3 rounded-full bg-[#78866d] px-5 py-2 text-xs text-white font-serif italic font-bold hover:bg-[#64765b] transition cursor-pointer"
+                            >
+                              Registrar devolução
+                            </button>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </>
             )}
-
           </section>
         </div>
-      </section>
-    </main>
+      </main>
+
+      {/* Confirmação de devolução */}
+      {confirmando && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4"
+          onClick={() => !enviandoDev && setConfirmando(null)}
+        >
+          <div
+            className="w-full max-w-md rounded-[30px] bg-[#FFF8E1] text-[#4A5546] p-6 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="font-serif italic font-bold text-xl text-[#52644f] mb-4">
+              Confirmar devolução
+            </h2>
+
+            <div className="space-y-2 text-sm">
+              <p>
+                <strong>Livro:</strong> {confirmando.livro}
+              </p>
+              <p>
+                <strong>Usuário:</strong> {confirmando.usuario}
+              </p>
+              <p>
+                <strong>Devolução prevista:</strong>{" "}
+                {formatarData(confirmando.dataPrevistaDevolucao)}
+              </p>
+              <p>
+                <strong>Entrega hoje:</strong> {formatarData(hojeISO())}
+              </p>
+            </div>
+
+            {diasAtrasoModal > 0 ? (
+              <p className="mt-4 rounded-2xl bg-[#F2CFC7] px-4 py-3 text-sm text-[#9A3A2A]">
+                {diasAtrasoModal} dia(s) de atraso. Multa estimada:{" "}
+                <strong>{moeda(diasAtrasoModal * VALOR_MULTA_POR_DIA)}</strong>.
+                O valor final é calculado pelo sistema ao confirmar.
+              </p>
+            ) : (
+              <p className="mt-4 rounded-2xl bg-[#DDE8CF] px-4 py-3 text-sm text-[#4B6B3A]">
+                Dentro do prazo, sem multa.
+              </p>
+            )}
+
+            <div className="mt-6 flex gap-3">
+              <button
+                type="button"
+                onClick={() => setConfirmando(null)}
+                disabled={enviandoDev}
+                className="flex-1 rounded-full bg-[#dce0cb] py-3 text-[#586b55] font-serif italic font-bold hover:bg-[#c9d1b8] transition cursor-pointer disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={confirmarDevolucao}
+                disabled={enviandoDev}
+                className="flex-1 rounded-full bg-[#78866d] py-3 text-white font-serif italic font-bold hover:bg-[#64765b] transition cursor-pointer disabled:opacity-50"
+              >
+                {enviandoDev ? "Registrando..." : "Confirmar"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

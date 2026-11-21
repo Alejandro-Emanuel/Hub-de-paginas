@@ -19,7 +19,7 @@ function Root({ children, onClick }: RootProps) {
 
 function Texto({ children }: { children: ReactNode }) {
   return (
-    <span className="ont-serif italic font-semibold text-sm">{children}</span>
+    <span className="font-serif italic font-semibold text-sm">{children}</span>
   );
 }
 
