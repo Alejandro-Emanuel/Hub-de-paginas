@@ -2,14 +2,14 @@
 
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
-import { Tela } from "@/lib/telas";
-import { chamarApi } from "@/lib/api";
+import { Tela } from "@/utils/telas";
+import { chamarApi } from "@/utils/api";
 import {
   diasDeAtraso,
   formatarData,
   hojeISO,
   somarDias,
-} from "@/lib/datas";
+} from "@/utils/datas";
 import { BarraLateral } from "../components/BarraLateral";
 import { CardIcone } from "../components/CardsDashboard";
 import { Titulo } from "../components/Titulo";

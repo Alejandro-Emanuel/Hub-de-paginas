@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { chamarApi, tipoDoToken } from "@/lib/api";
-import { diasDeAtraso, formatarData } from "@/lib/datas";
+import { chamarApi, tipoDoToken } from "@/utils/api";
+import { diasDeAtraso, formatarData } from "@/utils/datas";
 import { BarraLateral } from "../components/BarraLateral";
 import { Titulo } from "../components/Titulo";
 import { CardIcone } from "../components/CardsDashboard";

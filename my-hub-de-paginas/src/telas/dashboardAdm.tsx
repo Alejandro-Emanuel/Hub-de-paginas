@@ -14,7 +14,7 @@ import Perfil from "../assets/iconeCards/Perfil.png";
 import telaFundo from "../assets/iconeCards/telaDeFundo.png";
 import ajudaIcon from "../assets/iconeCards/interrogaçãoIcon.png";
 import logoutIcon from "../assets/iconeCards/Log out.png";
-import { Tela } from "@/lib/telas";
+import { Tela } from "@/utils/telas";
 
 interface DashboardAdmProps {
   onLogout: () => void;
