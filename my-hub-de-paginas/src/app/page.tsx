@@ -75,7 +75,7 @@ export default function Home() {
   }
 
   if (tela === "emprestimosDevolucoes") {
-    return <EmprestimosDevolucoes onLogout={Sair} IrPara={IrPara} />;
+    return <EmprestimosDevolucoes Voltar={Voltar} IrPara={IrPara} />;
   }
 
   if (tela === "historicoUsuario") {
@@ -86,14 +86,13 @@ export default function Home() {
     return (
       <Reservas
         Voltar={Voltar}
-        onLogout={Sair}
         IrParaAjuda={() => IrPara("help")}
       />
     );
   }
 
   if (tela === "multas") {
-    return <Multas Voltar={Voltar} />;
+    return <Multas Voltar={Voltar} IrPara={IrPara} />;
   }
 
   if (tela === "multasUsuario") {
@@ -105,7 +104,7 @@ export default function Home() {
   }
 
   if (tela === "relatorios") {
-    return <Relatorios Voltar={Voltar} />;
+    return <Relatorios Voltar={Voltar} IrPara={IrPara} />;
   }
 
     return (

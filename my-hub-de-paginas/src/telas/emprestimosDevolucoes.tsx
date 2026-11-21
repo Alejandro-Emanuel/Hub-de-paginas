@@ -11,21 +11,15 @@ import {
   somarDias,
 } from "@/utils/datas";
 import { estimarMulta } from "@/utils/multa";
-import { BarraLateral } from "../components/BarraLateral";
+import { BarraAdmin } from "../components/BarraAdmin";
 import { CardIcone } from "../components/CardsDashboard";
 import { Titulo } from "../components/Titulo";
 import telaFundo from "../assets/iconeCards/telaDeFundo.png";
-import perfil from "../assets/iconeCards/Perfil.png";
-import casinhaIcon from "../assets/iconeCards/casinhaIcon.png";
 import livroIcon from "../assets/iconeCards/Livro.png";
 import renovacaoIcon from "../assets/iconeCards/Renovacao.png";
-import multaIcon from "../assets/iconeCards/Multa.png";
-import clipIcon from "../assets/iconeCards/Paperclip.png";
-import ajudaIcon from "../assets/iconeCards/interrogaçãoIcon.png";
-import logoutIcon from "../assets/iconeCards/Log out.png";
 
 interface EmprestimosDevolucoesProps {
-  onLogout: () => void;
+  Voltar: () => void;
   IrPara: (tela: Tela) => void;
 }
 
@@ -98,7 +92,7 @@ const estiloBusca =
   "w-full rounded-full bg-white/70 px-5 py-3 text-sm outline-none focus:ring-2 focus:ring-[#4A5546]";
 
 export function EmprestimosDevolucoes({
-  onLogout,
+  Voltar,
   IrPara,
 }: EmprestimosDevolucoesProps) {
   const [painel, setPainel] = useState<Painel>(null);
@@ -290,46 +284,7 @@ export function EmprestimosDevolucoes({
       className="min-h-screen bg-[#C5CBB0] flex gap-6 p-6"
       style={{ backgroundImage: `url(${telaFundo.src})` }}
     >
-      <BarraLateral.Root>
-        <Image
-          src={perfil}
-          alt="Perfil do administrador"
-          className="w-20 h-20 rounded-full mx-auto"
-        />
-        <hr />
-
-        <BarraLateral.Item onClick={() => IrPara("dashboardAdm")}>
-          <Image src={casinhaIcon} alt="" className="w-6 h-6" />
-          Início
-        </BarraLateral.Item>
-
-        <BarraLateral.Item onClick={() => IrPara("cadastrarLivros")}>
-          <Image src={livroIcon} alt="" className="w-6 h-6" />
-          Livros
-        </BarraLateral.Item>
-
-        <BarraLateral.Item onClick={() => IrPara("multas")}>
-          <Image src={multaIcon} alt="" className="w-6 h-6" />
-          Multas
-        </BarraLateral.Item>
-
-        <BarraLateral.Item onClick={() => IrPara("relatorios")}>
-          <Image src={clipIcon} alt="" className="w-6 h-6" />
-          Relatórios
-        </BarraLateral.Item>
-
-        <div className="mt-auto flex flex-col gap-4">
-          <BarraLateral.Item onClick={() => IrPara("help")}>
-            <Image src={ajudaIcon} alt="" className="w-6 h-6" />
-            Ajuda
-          </BarraLateral.Item>
-
-          <BarraLateral.Item onClick={onLogout}>
-            <Image src={logoutIcon} alt="" className="w-6 h-6" />
-            Log out
-          </BarraLateral.Item>
-        </div>
-      </BarraLateral.Root>
+      <BarraAdmin atual="emprestimosDevolucoes" IrPara={IrPara} Voltar={Voltar} />
 
       <main className="flex-1 min-w-0 flex flex-col gap-6">
         <Titulo>Empréstimos e Devoluções</Titulo>

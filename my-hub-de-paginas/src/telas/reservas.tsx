@@ -13,6 +13,7 @@ import livroIcone from "../assets/iconeCards/Livro.png";
 import marcadorIcone from "../assets/iconeCards/Marcador.png";
 import renovacaoIcone from "../assets/iconeCards/Renovacao.png";
 import ajudaIcon from "@/assets/iconeCards/interrogaçãoIcon.png";
+import retornarIcon from "../assets/iconeCards/Log out.png";
 
 // ---- Regras que você pode ajustar ----------------------------------------
 const LIMITE_RENOVACOES = 2; // só vale se a API mandar "renovacoes" no empréstimo
@@ -62,7 +63,6 @@ type Aviso = { tipo: "ok" | "erro"; texto: string };
 
 interface ReservasProps {
   Voltar: () => void;
-  onLogout: () => void;
   IrParaAjuda: () => void;
 }
 
@@ -74,7 +74,7 @@ const corAviso = (tipo: Aviso["tipo"]) =>
     ? "bg-[#DDE8CF] text-[#4B6B3A]"
     : "bg-[#F2CFC7] text-[#9A3A2A]";
 
-export function Reservas({ Voltar, onLogout, IrParaAjuda }: ReservasProps) {
+export function Reservas({ Voltar, IrParaAjuda }: ReservasProps) {
   // Só muda o que aparece na tela; a regra de verdade fica no backend
   const [ehAdmin] = useState(() => tipoDoToken() === "adm");
 
@@ -192,11 +192,6 @@ export function Reservas({ Voltar, onLogout, IrParaAjuda }: ReservasProps) {
     setErroLista("");
   }
 
-  function handleLogout() {
-    localStorage.removeItem("token");
-    onLogout();
-  }
-
   async function reservarLivro(livro: Livro) {
     setOcupado(livro.id);
     setAvisosLivro((atual) => {
@@ -291,12 +286,11 @@ export function Reservas({ Voltar, onLogout, IrParaAjuda }: ReservasProps) {
           Ajuda
         </BarraLateral.Item>
 
-        <BarraLateral.Item onClick={Voltar}>← Voltar</BarraLateral.Item>
-
         <div className="mt-auto">
-          {/* Antes chamava handleLogout() e depois Voltar(), e o Voltar
-              desfazia o logout. Agora só sai. */}
-          <BarraLateral.Item onClick={handleLogout}>Sair</BarraLateral.Item>
+          <BarraLateral.Item onClick={Voltar}>
+            <Image src={retornarIcon} alt="" className="w-6 h-6" />
+            Voltar
+          </BarraLateral.Item>
         </div>
       </BarraLateral.Root>
 
