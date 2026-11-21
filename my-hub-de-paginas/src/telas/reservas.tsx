@@ -20,6 +20,8 @@ const LIMITE_RENOVACOES = 2; // só vale se a API mandar "renovacoes" no emprés
 const DIAS_POR_RENOVACAO = 7; // o backend atual soma 7 dias
 // ---------------------------------------------------------------------------
 
+type StatusLivro = "Disponível" | "Emprestado" | "Reservado";
+
 interface Livro {
   id: number;
   nome: string;
@@ -28,6 +30,7 @@ interface Livro {
   ano: number;
   genero: string;
   disponivel?: boolean; // se a API ainda não manda, a tela libera o botão Reservar
+  status?: StatusLivro;
 }
 
 interface LivroExterno {
@@ -74,6 +77,17 @@ const corAviso = (tipo: Aviso["tipo"]) =>
     ? "bg-[#DDE8CF] text-[#4B6B3A]"
     : "bg-[#F2CFC7] text-[#9A3A2A]";
 
+function rotuloStatusLivro(livro: Livro): StatusLivro {
+  if (livro.status) return livro.status;
+  return livro.disponivel === false ? "Emprestado" : "Disponível";
+}
+
+function corStatusLivro(status: StatusLivro): string {
+  if (status === "Disponível") return "bg-[#DDE8CF] text-[#4B6B3A]";
+  if (status === "Reservado") return "bg-[#E2E4CF] text-[#586b55]";
+  return "bg-[#F5E3B8] text-[#7A5B1E]";
+}
+
 export function Reservas({ Voltar, IrParaAjuda }: ReservasProps) {
   // Só muda o que aparece na tela; a regra de verdade fica no backend
   const [ehAdmin] = useState(() => tipoDoToken() === "adm");
@@ -109,7 +123,7 @@ export function Reservas({ Voltar, IrParaAjuda }: ReservasProps) {
           `/api/livros?busca=${encodeURIComponent(busca)}`,
         );
         if (!cancelado) {
-          setLivros(dados);
+          setLivros(Array.isArray(dados) ? dados : []);
           setErroBusca("");
         }
       } catch {
@@ -121,8 +135,12 @@ export function Reservas({ Voltar, IrParaAjuda }: ReservasProps) {
         const resExt = await fetch(
           `/api/livros/externo?busca=${encodeURIComponent(busca)}`,
         );
-        if (resExt.ok && !cancelado) setExternos(await resExt.json());
-        else if (!cancelado) setExternos([]);
+        if (resExt.ok && !cancelado) {
+          const dadosExt = await resExt.json();
+          setExternos(Array.isArray(dadosExt) ? dadosExt : []);
+        } else if (!cancelado) {
+          setExternos([]);
+        }
       } catch {
         if (!cancelado) setExternos([]);
       }
@@ -132,7 +150,7 @@ export function Reservas({ Voltar, IrParaAjuda }: ReservasProps) {
       cancelado = true;
       clearTimeout(timer);
     };
-  }, [painel, busca]);
+  }, [painel, busca, versao]);
 
   // Lista de reservas (do usuário, ou de todos se for administrador)
   useEffect(() => {
@@ -148,7 +166,9 @@ export function Reservas({ Voltar, IrParaAjuda }: ReservasProps) {
       })
       .catch((erro) => {
         if (!cancelado) {
-          setErroLista(mensagemDe(erro, "Não foi possível carregar as reservas."));
+          setErroLista(
+            mensagemDe(erro, "Não foi possível carregar as reservas."),
+          );
         }
       })
       .finally(() => {
@@ -174,7 +194,9 @@ export function Reservas({ Voltar, IrParaAjuda }: ReservasProps) {
       })
       .catch((erro) => {
         if (!cancelado) {
-          setErroLista(mensagemDe(erro, "Não foi possível carregar seus empréstimos."));
+          setErroLista(
+            mensagemDe(erro, "Não foi possível carregar seus empréstimos."),
+          );
         }
       })
       .finally(() => {
@@ -212,6 +234,7 @@ export function Reservas({ Voltar, IrParaAjuda }: ReservasProps) {
           texto: "Reserva feita! Você pode acompanhar em Minhas reservas.",
         },
       }));
+      setVersao((v) => v + 1);
     } catch (erro) {
       setAvisosLivro((atual) => ({
         ...atual,
@@ -370,6 +393,11 @@ export function Reservas({ Voltar, IrParaAjuda }: ReservasProps) {
                 <ul className="flex flex-col gap-3">
                   {livros.map((livro) => {
                     const avisoLivro = avisosLivro[livro.id];
+                    const statusAtual = rotuloStatusLivro(livro);
+                    const estaDisponivel =
+                      livro.disponivel !== undefined
+                        ? livro.disponivel
+                        : statusAtual === "Disponível";
 
                     return (
                       <li
@@ -382,26 +410,21 @@ export function Reservas({ Voltar, IrParaAjuda }: ReservasProps) {
                               {livro.nome}
                             </p>
                             <p className="text-sm">
-                              {livro.nome_do_autor} · {livro.editora} · {livro.ano}
+                              {livro.nome_do_autor} · {livro.editora} ·{" "}
+                              {livro.ano}
                             </p>
                             <p className="text-xs opacity-70">{livro.genero}</p>
                           </div>
 
-                          {livro.disponivel !== undefined && (
-                            <span
-                              className={`shrink-0 rounded-full px-3 py-1 text-[11px] font-bold ${
-                                livro.disponivel
-                                  ? "bg-[#DDE8CF] text-[#4B6B3A]"
-                                  : "bg-[#F5E3B8] text-[#7A5B1E]"
-                              }`}
-                            >
-                              {livro.disponivel ? "Disponível" : "Emprestado"}
-                            </span>
-                          )}
+                          <span
+                            className={`shrink-0 rounded-full px-3 py-1 text-[11px] font-bold ${corStatusLivro(statusAtual)}`}
+                          >
+                            {statusAtual}
+                          </span>
                         </div>
 
                         {!ehAdmin &&
-                          (livro.disponivel === true ? (
+                          (estaDisponivel ? (
                             <p className="mt-3 text-xs opacity-70">
                               Este livro está disponível: é só retirar na
                               biblioteca, sem precisar reservar.
@@ -410,10 +433,14 @@ export function Reservas({ Voltar, IrParaAjuda }: ReservasProps) {
                             <button
                               type="button"
                               onClick={() => reservarLivro(livro)}
-                              disabled={ocupado === livro.id || avisoLivro?.tipo === "ok"}
+                              disabled={
+                                ocupado === livro.id || avisoLivro?.tipo === "ok"
+                              }
                               className="mt-3 rounded-full bg-[#78866d] px-5 py-2 text-xs text-white font-serif italic font-bold hover:bg-[#64765b] transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                              {ocupado === livro.id ? "Reservando..." : "Reservar"}
+                              {ocupado === livro.id
+                                ? "Reservando..."
+                                : "Reservar"}
                             </button>
                           ))}
 
@@ -438,7 +465,9 @@ export function Reservas({ Voltar, IrParaAjuda }: ReservasProps) {
 
                 {externos.length > 0 && (
                   <>
-                    <p className="font-serif italic text-sm">Resultados externos</p>
+                    <p className="font-serif italic text-sm">
+                      Resultados externos
+                    </p>
                     <ul className="flex flex-col gap-3">
                       {externos.map((livro, i) => (
                         <li
@@ -531,7 +560,9 @@ export function Reservas({ Voltar, IrParaAjuda }: ReservasProps) {
                           disabled={ocupado === reserva.id}
                           className="mt-3 text-xs font-bold text-[#E08328] hover:underline cursor-pointer disabled:opacity-50"
                         >
-                          {ocupado === reserva.id ? "Cancelando..." : "Cancelar reserva"}
+                          {ocupado === reserva.id
+                            ? "Cancelando..."
+                            : "Cancelar reserva"}
                         </button>
                       )}
                     </li>
@@ -556,7 +587,9 @@ export function Reservas({ Voltar, IrParaAjuda }: ReservasProps) {
               ) : (
                 <ul className="flex flex-col gap-3">
                   {emprestimosAtivos.map((emprestimo) => {
-                    const atraso = diasDeAtraso(emprestimo.data_prevista_devolucao);
+                    const atraso = diasDeAtraso(
+                      emprestimo.data_prevista_devolucao,
+                    );
                     const renovacoes = emprestimo.renovacoes;
                     const noLimite =
                       renovacoes !== undefined && renovacoes >= LIMITE_RENOVACOES;
@@ -593,7 +626,9 @@ export function Reservas({ Voltar, IrParaAjuda }: ReservasProps) {
                                 : "bg-[#F5E3B8] text-[#7A5B1E]"
                             }`}
                           >
-                            {atraso > 0 ? `${atraso} dia(s) de atraso` : "Em andamento"}
+                            {atraso > 0
+                              ? `${atraso} dia(s) de atraso`
+                              : "Em andamento"}
                           </span>
                         </div>
 

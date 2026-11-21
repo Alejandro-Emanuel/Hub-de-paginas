@@ -64,7 +64,9 @@ export function Multas({ Voltar, IrPara }: MultasProps) {
 
     chamarApi<Multa[]>("/api/multas")
       .then((dados) => {
-        if (!cancelado) setMultas(Array.isArray(dados) ? dados : []);
+        if (!cancelado) {
+          setMultas(Array.isArray(dados) ? dados : []);
+        }
       })
       .catch((e) => {
         if (!cancelado) {
@@ -104,30 +106,44 @@ export function Multas({ Voltar, IrPara }: MultasProps) {
         !termo ||
         multa.usuario.toLowerCase().includes(termo) ||
         multa.livro.toLowerCase().includes(termo) ||
+        multa.email.toLowerCase().includes(termo) ||
         String(multa.id).includes(termo);
 
       return combinaBusca && (filtro === "Todas" || multa.status === filtro);
     });
   }, [multas, pesquisa, filtro]);
 
-  // Atualiza o status da multa (Paga ou Cancelada)
+  // Atualiza o status da multa (Paga ou Cancelada) via backend
   async function atualizarStatus(id: number, status: StatusMulta) {
     setOcupado(id);
     setAviso(null);
 
     try {
-      await chamarApi(`/api/multas/${id}`, {
+      const resposta = await chamarApi<{
+        mensagem?: string;
+        multa?: { status?: StatusMulta };
+        resultado?: { status?: StatusMulta };
+      }>(`/api/multas/${id}`, {
         method: "PUT",
         body: JSON.stringify({ status }),
       });
 
+      const statusConfirmado =
+        resposta?.multa?.status ?? resposta?.resultado?.status ?? status;
+
       setMultas((atuais) =>
-        atuais.map((multa) => (multa.id === id ? { ...multa, status } : multa)),
+        atuais.map((multa) =>
+          multa.id === id ? { ...multa, status: statusConfirmado } : multa,
+        ),
       );
+
       setAviso({
         tipo: "ok",
         texto:
-          status === "Paga" ? "Multa marcada como paga." : "Multa cancelada.",
+          resposta?.mensagem ||
+          (statusConfirmado === "Paga"
+            ? "Multa marcada como paga."
+            : "Multa cancelada."),
       });
     } catch (e) {
       setAviso({
@@ -244,7 +260,7 @@ export function Multas({ Voltar, IrPara }: MultasProps) {
               type="search"
               value={pesquisa}
               onChange={(e) => setPesquisa(e.target.value)}
-              placeholder="Buscar usuário, livro ou ID"
+              placeholder="Buscar usuário, e-mail, livro ou ID"
               aria-label="Buscar multas"
               className="flex-1 min-w-48 rounded-full bg-white/70 px-5 py-3 text-sm outline-none focus:ring-2 focus:ring-[#4A5546]"
             />
@@ -448,9 +464,12 @@ export function Multas({ Voltar, IrPara }: MultasProps) {
                 <button
                   type="button"
                   onClick={() => atualizarStatus(multaSelecionada.id, "Paga")}
-                  className="flex-1 rounded-full bg-[#78866d] py-3 text-white font-serif italic font-bold hover:bg-[#64765b] transition cursor-pointer"
+                  disabled={ocupado === multaSelecionada.id}
+                  className="flex-1 rounded-full bg-[#78866d] py-3 text-white font-serif italic font-bold hover:bg-[#64765b] transition cursor-pointer disabled:opacity-50"
                 >
-                  Marcar como paga
+                  {ocupado === multaSelecionada.id
+                    ? "Salvando..."
+                    : "Marcar como paga"}
                 </button>
               )}
             </div>

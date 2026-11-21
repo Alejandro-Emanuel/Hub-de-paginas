@@ -271,7 +271,7 @@ export function DashboardUsuario({ onLogout, IrPara }: DashboardUsuarioProps) {
                     }}
                     className="w-full h-full flex flex-col items-center rounded-3xl bg-[#F8F5E4] p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition cursor-pointer"
                   >
-                    <div className="relative w-28 h-36 rounded-xl border-[4px] border-[#241916] bg-linear-to-br from-[#8b6753] to-[#3b2924] shadow-md overflow-hidden flex flex-col items-center justify-center">
+                    <div className="relative w-28 h-36 rounded-xl border-4 border-[#241916] bg-linear-to-br from-[#8b6753] to-[#3b2924] shadow-md overflow-hidden flex flex-col items-center justify-center">
                       <div className="absolute inset-1 border border-[#c3a58b]/70 rounded-sm" />
                       <span className="text-4xl text-[#d9c2a7] opacity-90">
                         ⚝

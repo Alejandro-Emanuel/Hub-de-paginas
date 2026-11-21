@@ -168,9 +168,6 @@ export function EmprestimosDevolucoes({
     if (painel !== "devolucoes") return;
     let cancelado = false;
 
-    setCarregando(true);
-    setErroLista("");
-
     chamarApi<EmprestimoAdm[]>("/api/emprestimo")
       .then((dados) => {
         if (!cancelado) setLista(Array.isArray(dados) ? dados : []);
@@ -202,6 +199,10 @@ export function EmprestimosDevolucoes({
   }, [lista, filtro, pesquisa]);
 
   function abrirPainel(novo: Exclude<Painel, null>) {
+    if (novo === "devolucoes") {
+      setCarregando(true);
+      setErroLista("");
+    }
     setPainel(novo);
     setAvisoNovo(null);
     setAvisoDev(null);
@@ -263,6 +264,8 @@ export function EmprestimosDevolucoes({
           : "Devolução registrada sem multa.",
       });
       setConfirmando(null);
+      setCarregando(true);
+      setErroLista("");
       setVersao((v) => v + 1);
     } catch (erro) {
       setAvisoDev({

@@ -23,34 +23,70 @@ export async function cadastrarLivro(dados: LivrosInput) {
   return { mensagem: "Livro cadastrado com sucesso", livro };
 }
 
-// Buscar/filtrar livros
-export async function buscarLivros(termoBusca: string) {
+// Buscar/filtrar livros já considerando empréstimos ativos e reservas
+export async function buscarLivrosComDisponibilidade(termoBusca: string) {
+  const termo = termoBusca.trim();
+
   const livros = await prisma.cadastro_livro.findMany({
-    where: termoBusca
+    where: termo
       ? {
           OR: [
-            { nome: { contains: termoBusca, mode: "insensitive" as const } },
+            { nome: { contains: termo, mode: "insensitive" as const } },
             {
               nome_do_autor: {
-                contains: termoBusca,
+                contains: termo,
                 mode: "insensitive" as const,
               },
             },
-            { genero: { contains: termoBusca, mode: "insensitive" as const } },
+            { genero: { contains: termo, mode: "insensitive" as const } },
           ],
         }
       : undefined,
-    orderBy: {
-      nome: "asc",
+    include: {
+      emprestimo: {
+        where: { devolucao: { is: null } },
+        select: { id: true },
+      },
+      reserva: {
+        select: { id: true, disponivel: true },
+      },
     },
+    orderBy: { nome: "asc" },
   });
 
-  return livros;
+  return livros.map((livro) => {
+    const estaEmprestado = livro.emprestimo.length > 0;
+    const reservaLiberada = livro.reserva.some((r) => r.disponivel);
+    const temReserva = livro.reserva.length > 0;
+    const disponivel = !estaEmprestado && !reservaLiberada;
+
+    const status = estaEmprestado
+      ? ("Emprestado" as const)
+      : reservaLiberada || temReserva
+        ? ("Reservado" as const)
+        : ("Disponível" as const);
+
+    return {
+      id: livro.id,
+      nome: livro.nome,
+      nome_do_autor: livro.nome_do_autor,
+      editora: livro.editora,
+      ano: livro.ano,
+      genero: livro.genero,
+      disponivel,
+      status,
+    };
+  });
+}
+
+// Mantém compatibilidade com quem chama buscarLivros diretamente
+export async function buscarLivros(termoBusca: string) {
+  return buscarLivrosComDisponibilidade(termoBusca);
 }
 
 // Buscar um único livro por ID
 export async function buscarLivroPorId(id: number) {
-  return await prisma.cadastro_livro.findUnique({
+  return prisma.cadastro_livro.findUnique({
     where: { id },
   });
 }
@@ -60,11 +96,15 @@ export async function atualizarLivro(id: number, dados: Partial<LivrosInput>) {
   const livroAtualizado = await prisma.cadastro_livro.update({
     where: { id },
     data: {
-      ...(dados.titulo && { nome: dados.titulo.trim() }),
-      ...(dados.autor && { nome_do_autor: dados.autor.trim() }),
-      ...(dados.editora && { editora: dados.editora.trim() }),
-      ...(dados.ano && { ano: Number(dados.ano) }),
-      ...(dados.genero && { genero: dados.genero.trim() }),
+      ...(dados.titulo !== undefined &&
+        dados.titulo.trim() !== "" && { nome: dados.titulo.trim() }),
+      ...(dados.autor !== undefined &&
+        dados.autor.trim() !== "" && { nome_do_autor: dados.autor.trim() }),
+      ...(dados.editora !== undefined &&
+        dados.editora.trim() !== "" && { editora: dados.editora.trim() }),
+      ...(dados.ano !== undefined && { ano: Number(dados.ano) }),
+      ...(dados.genero !== undefined &&
+        dados.genero.trim() !== "" && { genero: dados.genero.trim() }),
     },
   });
 
