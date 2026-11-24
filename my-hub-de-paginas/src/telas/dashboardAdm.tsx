@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
@@ -67,7 +67,6 @@ export function DashboardAdm({ onLogout, IrPara }: DashboardAdmProps) {
           Ajuda
         </BarraLateral.Item>
 
-        
         <BarraLateral.Item onClick={() => IrPara("relatorios")}>
           <Image src={Marcador} alt="" className="w-6 h-6" />
           Histórico
@@ -94,7 +93,6 @@ export function DashboardAdm({ onLogout, IrPara }: DashboardAdmProps) {
             <CardIcone.Texto>Cadastrar</CardIcone.Texto>
           </CardIcone.Root>
 
-          
           <CardIcone.Root onClick={() => IrPara("emprestimosDevolucoes")}>
             <Image
               src={Dollar}
